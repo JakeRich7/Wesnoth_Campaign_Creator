@@ -1,4 +1,5 @@
 import re
+import shutil
 from pathlib import Path
 
 def format_wml(raw_text):
@@ -30,18 +31,25 @@ def parse_captains_from_map(map_text):
 def generate_campaign_files(campaign_name, scenarios_list):
     campaign_id = campaign_name.lower().replace(" ", "_")
     export_root = Path.home() / "Desktop" / f"wesnoth_addon_{campaign_id}"
+    
+    if export_root.exists():
+        shutil.rmtree(export_root)
+        
     maps_dir = export_root / "maps"
     scenarios_dir = export_root / "scenarios"
     
     maps_dir.mkdir(parents=True, exist_ok=True)
     scenarios_dir.mkdir(parents=True, exist_ok=True)
     
+    first_clean = re.sub(r'[^a-zA-Z0-9\s_]', '', scenarios_list[0]["title"])
+    first_scen_id = f"01_{first_clean.strip().replace(' ', '_')}"
+
     main_cfg_raw = f"""
 [campaign]
     id={campaign_id}
     name=_"{campaign_name}"
     define=CAMPAIGN_{campaign_id.upper()}
-    first_scenario={campaign_id}_01
+    first_scenario={first_scen_id}
 [/campaign]
 
 #ifdef CAMPAIGN_{campaign_id.upper()}
@@ -56,7 +64,11 @@ def generate_campaign_files(campaign_name, scenarios_list):
         
     for i, s in enumerate(scenarios_list):
         scen_num = f"{i+1:02d}"
-        scen_id = f"{campaign_id}_{scen_num}"
+        
+        clean_title = re.sub(r'[^a-zA-Z0-9\s_]', '', s["title"])
+        title_slug = clean_title.strip().replace(" ", "_")
+        scen_id = f"{scen_num}_{title_slug}"
+        
         map_file_name = f"{scen_num}_map.map"
         
         if s["map_data"]:
@@ -76,7 +88,13 @@ def generate_campaign_files(campaign_name, scenarios_list):
     canrecruit=yes
 [/side]"""
 
-        next_scen = f"{campaign_id}_{i+2:02d}" if (i + 1) < len(scenarios_list) else "null"
+        if (i + 1) < len(scenarios_list):
+            next_s = scenarios_list[i+1]
+            next_clean = re.sub(r'[^a-zA-Z0-9\s_]', '', next_s["title"])
+            next_slug = next_clean.strip().replace(" ", "_")
+            next_scen = f"{i+2:02d}_{next_slug}"
+        else:
+            next_scen = "null"
         
         scenario_cfg_raw = f"""
 [scenario]
