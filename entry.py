@@ -81,6 +81,17 @@ def handle_import():
         render_workspace()
         messagebox.showinfo("Import Success", f"Successfully imported {len(scenarios)} scenarios!")
 
+
+def handle_reset():
+    """Wipes all scenario data from memory and returns the application to a blank layout slate."""
+    if messagebox.askyesno("Reset Project", "Are you sure you want to clear the current campaign? All unsaved work will be lost."):
+        app_state.state["campaign_name"] = "My Epic Campaign"
+        app_state.state["scenarios"] = []
+        app_state.state["current_index"] = None
+        refresh_sidebar()
+        render_workspace()
+
+
 def handle_export():
     save_active_inputs()
     if not app_state.state["scenarios"]:
@@ -143,12 +154,12 @@ def render_workspace():
         
     data = app_state.state["scenarios"][idx]
     
-    ctk.CTkLabel(app_state.state["center_content_frame"], text="Scenario Title Name:", font=("Arial", 13, "bold")).pack(anchor="w", pady=(10, 2))
+    ctk.CTkLabel(app_state.state["center_content_frame"], text="Scenario Name:", font=("Arial", 13, "bold")).pack(anchor="w", pady=(10, 2))
     app_state.state["scenario_title_input"] = ctk.CTkEntry(app_state.state["center_content_frame"], width=400)
     app_state.state["scenario_title_input"].insert(0, data["title"])
     app_state.state["scenario_title_input"].pack(anchor="w", pady=(0, 15))
     
-    ctk.CTkLabel(app_state.state["center_content_frame"], text="Required Geographic Scenario Map (.map):", font=("Arial", 13, "bold")).pack(anchor="w", pady=(5, 2))
+    ctk.CTkLabel(app_state.state["center_content_frame"], text="Scenario Map File:", font=("Arial", 13, "bold")).pack(anchor="w", pady=(5, 2))
     status_text = f"Linked File: {data['map_name']}" if data["map_name"] else "Status: No Map Assigned"
     status_color = "#1f6aa5" if data["map_name"] else "#A83232"
     ctk.CTkLabel(app_state.state["center_content_frame"], text=status_text, text_color=status_color).pack(anchor="w")
@@ -178,8 +189,16 @@ def boot():
     sidebar.pack(side="left", fill="y")
     ctk.CTkLabel(sidebar, text="Campaign Structure", font=("Arial", 15, "bold")).pack(pady=15, padx=10, anchor="w")
     
-    ctk.CTkButton(sidebar, text="➕ Add Scenario", fg_color="#2eb85c", hover_color="#228b44", command=handle_add).pack(fill="x", padx=10, pady=(0, 5))
-    ctk.CTkButton(sidebar, text="📂 Import Folder", fg_color="#2b2b2b", hover_color="#3b3b3b", command=handle_import).pack(fill="x", padx=10, pady=(0, 15))
+    top_button_row = ctk.CTkFrame(sidebar, fg_color="transparent")
+    top_button_row.pack(fill="x", padx=10, pady=(0, 5))
+
+    import_btn = ctk.CTkButton(top_button_row, text="📂 Import", fg_color="#1f6aa5", hover_color="#3b3b3b", command=handle_import)
+    import_btn.pack(side="left", fill="x", expand=True, padx=(0, 5))
+    
+    reset_btn = ctk.CTkButton(top_button_row, text="🔄 Reset", fg_color="#A83232", hover_color="#822525", command=handle_reset)
+    reset_btn.pack(side="right", fill="x", expand=True)
+    
+    ctk.CTkButton(sidebar, text="➕ Add Scenario", fg_color="#2eb85c", hover_color="#228b44", command=handle_add).pack(fill="x", padx=10, pady=(0, 15))
     
     app_state.state["scenario_list_frame"] = ctk.CTkScrollableFrame(sidebar, width=230)
     app_state.state["scenario_list_frame"].pack(fill="both", expand=True, padx=5, pady=5)
