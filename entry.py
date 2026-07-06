@@ -154,30 +154,37 @@ def render_workspace():
         
     data = app_state.state["scenarios"][idx]
     
-    ctk.CTkLabel(app_state.state["center_content_frame"], text="Scenario Name:", font=("Arial", 13, "bold")).pack(anchor="w", pady=(10, 2))
-    app_state.state["scenario_title_input"] = ctk.CTkEntry(app_state.state["center_content_frame"], width=400)
+    title_row = ctk.CTkFrame(app_state.state["center_content_frame"], fg_color="transparent")
+    title_row.pack(fill="x", pady=(15, 10), anchor="w")
+    
+    title_lbl = ctk.CTkLabel(title_row, text="Scenario Name: ", font=("Arial", 13, "bold"), width=130, anchor="w")
+    title_lbl.pack(side="left")
+    
+    app_state.state["scenario_title_input"] = ctk.CTkEntry(title_row, width=400)
     app_state.state["scenario_title_input"].insert(0, data["title"])
-    app_state.state["scenario_title_input"].pack(anchor="w", pady=(0, 15))
+    app_state.state["scenario_title_input"].pack(side="left", padx=10)
     
-    ctk.CTkLabel(app_state.state["center_content_frame"], text="Scenario Map File:", font=("Arial", 13, "bold")).pack(anchor="w", pady=(5, 2))
-    status_text = f"Linked File: {data['map_name']}" if data["map_name"] else "Status: No Map Assigned"
-    status_color = "#1f6aa5" if data["map_name"] else "#A83232"
-    ctk.CTkLabel(app_state.state["center_content_frame"], text=status_text, text_color=status_color).pack(anchor="w")
+    map_row = ctk.CTkFrame(app_state.state["center_content_frame"], fg_color="transparent")
+    map_row.pack(fill="x", pady=10, anchor="w")
     
-    ctk.CTkButton(app_state.state["center_content_frame"], text="📂 Upload Map File", command=handle_upload).pack(anchor="w", pady=(5, 15))
+    map_lbl = ctk.CTkLabel(map_row, text="Scenario Map File: ", font=("Arial", 13, "bold"), width=130, anchor="w")
+    map_lbl.pack(side="left")
+    
+    upload_btn = ctk.CTkButton(map_row, text="📂 Upload Map File", command=handle_upload, width=150)
+    upload_btn.pack(side="left", padx=(10, 0))
     
     if data["map_name"]:
-        ctk.CTkLabel(
-            app_state.state["center_content_frame"], 
-            text=f"✅ Map Verified: Extracted {data['captains_count']} Starting Team Slots.", 
-            text_color="green", font=("Arial", 12, "bold")
-        ).pack(anchor="w", pady=(0, 15))
+        status_string = f"Linked File: {data['map_name']} (Verified: Extracted {data['captains_count']} Starting Team Slots)"
+        status_color = "green"
+        status_font = ("Arial", 12, "bold")
     else:
-        ctk.CTkLabel(
-            app_state.state["center_content_frame"], 
-            text="⚠️ Missing Map: Defaulting scenario generation to 2 player sides (Team 1 vs Team 2).", 
-            text_color="#D97706", font=("Arial", 12, "italic")
-        ).pack(anchor="w", pady=(0, 15))
+        status_string = "Status: No Map Assigned (Defaulting scenario generation to 2 player sides)"
+        status_color = "#D97706"
+        status_font = ("Arial", 12, "italic")
+        
+    status_lbl = ctk.CTkLabel(map_row, text=status_string, text_color=status_color, font=status_font, anchor="w")
+    status_lbl.pack(side="left", padx=15)
+
 
 def boot():
     ctk.set_appearance_mode("Dark")
