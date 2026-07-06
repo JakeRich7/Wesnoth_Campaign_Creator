@@ -74,9 +74,15 @@ def handle_import():
             messagebox.showwarning("Import Failed", "No valid .cfg scenario files were found inside this folder.")
             return
             
-        app_state.state["campaign_name"] = Path(selected_dir).name.replace("wesnoth_addon_", "").replace("_", " ").title()
+        clean_name = Path(selected_dir).name.replace("wesnoth_addon_", "").replace("_", " ").title()
+        app_state.state["campaign_name"] = clean_name
         app_state.state["scenarios"] = scenarios
         app_state.state["current_index"] = 0
+        
+        if hasattr(app_state, "campaign_name_input") and app_state.campaign_name_input:
+            app_state.campaign_name_input.delete(0, "end")
+            app_state.campaign_name_input.insert(0, clean_name)
+            
         refresh_sidebar()
         render_workspace()
         messagebox.showinfo("Import Success", f"Successfully imported {len(scenarios)} scenarios!")
@@ -94,6 +100,10 @@ def handle_reset():
 
 def handle_export():
     save_active_inputs()
+    
+    if hasattr(app_state, "campaign_name_input") and app_state.campaign_name_input:
+        app_state.state["campaign_name"] = app_state.campaign_name_input.get()
+
     if not app_state.state["scenarios"]:
         messagebox.showwarning("Warning", "Add at least one scenario before generating your campaign!")
         return
@@ -116,6 +126,7 @@ def handle_export():
         messagebox.showinfo("Success", f"WML Campaign Successfully Built!\nSaved to: {dest}")
     except Exception as e:
         messagebox.showerror("Error", f"Generation Error Occurred:\n{str(e)}")
+
 
 def refresh_sidebar():
     for widget in app_state.state["scenario_list_frame"].winfo_children():
@@ -194,12 +205,18 @@ def boot():
     
     sidebar = ctk.CTkFrame(root, width=250, corner_radius=0)
     sidebar.pack(side="left", fill="y")
-    ctk.CTkLabel(sidebar, text="Campaign Structure", font=("Arial", 15, "bold")).pack(pady=15, padx=10, anchor="w")
+    
+    campaign_name_frame = ctk.CTkFrame(sidebar, fg_color="transparent")
+    campaign_name_frame.pack(fill="x", pady=(15, 10), padx=10)
+    
+    app_state.campaign_name_input = ctk.CTkEntry(campaign_name_frame, font=("Arial", 14, "bold"))
+    app_state.campaign_name_input.insert(0, app_state.state["campaign_name"])
+    app_state.campaign_name_input.pack(fill="x")
     
     top_button_row = ctk.CTkFrame(sidebar, fg_color="transparent")
     top_button_row.pack(fill="x", padx=10, pady=(0, 5))
-
-    import_btn = ctk.CTkButton(top_button_row, text="📂 Import", fg_color="#1f6aa5", hover_color="#3b3b3b", command=handle_import)
+    
+    import_btn = ctk.CTkButton(top_button_row, text="📂 Import", fg_color="#1f6aa5", hover_color="#144870", command=handle_import)
     import_btn.pack(side="left", fill="x", expand=True, padx=(0, 5))
     
     reset_btn = ctk.CTkButton(top_button_row, text="🔄 Reset", fg_color="#A83232", hover_color="#822525", command=handle_reset)
@@ -222,3 +239,4 @@ def boot():
 
 if __name__ == "__main__":
     boot()
+

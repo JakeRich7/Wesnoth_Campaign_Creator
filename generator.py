@@ -29,8 +29,8 @@ def parse_captains_from_map(map_text):
     return len(valid_teams) if valid_teams else 0
 
 def generate_campaign_files(campaign_name, scenarios_list):
-    campaign_id = campaign_name.lower().replace(" ", "_")
-    export_root = Path.home() / "Desktop" / f"wesnoth_addon_{campaign_id}"
+    campaign_id = campaign_name.strip().replace(" ", "_")
+    export_root = Path.home() / "Desktop" / campaign_id
     
     if export_root.exists():
         shutil.rmtree(export_root)
@@ -69,7 +69,7 @@ def generate_campaign_files(campaign_name, scenarios_list):
         title_slug = clean_title.strip().replace(" ", "_")
         scen_id = f"{scen_num}_{title_slug}"
         
-        map_file_name = f"{scen_num}_map.map"
+        map_file_name = f"{scen_id}.map"
         
         if s["map_data"]:
             with open(maps_dir / map_file_name, "w", encoding="utf-8") as f:
