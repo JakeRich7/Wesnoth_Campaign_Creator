@@ -5,11 +5,13 @@ import app_state
 import generator
 import importer
 
+
 def save_active_inputs():
     idx = app_state.state["current_index"]
     if idx is not None and idx < len(app_state.state["scenarios"]):
         if app_state.state["scenario_title_input"]:
             app_state.state["scenarios"][idx]["title"] = app_state.state["scenario_title_input"].get()
+
 
 def handle_add():
     save_active_inputs()
@@ -24,6 +26,7 @@ def handle_add():
     refresh_sidebar()
     render_workspace()
 
+
 def handle_delete(idx):
     if 0 <= idx < len(app_state.state["scenarios"]):
         del app_state.state["scenarios"][idx]
@@ -34,11 +37,13 @@ def handle_delete(idx):
         refresh_sidebar()
         render_workspace()
 
+
 def handle_select(idx):
     save_active_inputs()
     app_state.state["current_index"] = idx
     refresh_sidebar()
     render_workspace()
+
 
 def handle_upload():
     idx = app_state.state["current_index"]
@@ -63,6 +68,7 @@ def handle_upload():
             render_workspace()
         except Exception as e:
             messagebox.showerror("Error", f"Failed to ingest map file:\n{str(e)}")
+
 
 def handle_import():
     save_active_inputs()
@@ -236,6 +242,7 @@ def boot():
     
     render_workspace()
     root.mainloop()
+
 
 if __name__ == "__main__":
     boot()

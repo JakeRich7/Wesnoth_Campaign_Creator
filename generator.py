@@ -2,6 +2,7 @@ import re
 import shutil
 from pathlib import Path
 
+
 def format_wml(raw_text):
     formatted_lines = []
     indent_level = 0
@@ -23,10 +24,12 @@ def format_wml(raw_text):
 
     return "\n".join(formatted_lines)
 
+
 def parse_captains_from_map(map_text):
     positions = set(re.findall(r'\b\d+\b', map_text))
     valid_teams = [int(p) for p in positions if int(p) > 0]
     return len(valid_teams) if valid_teams else 0
+
 
 def generate_campaign_files(campaign_name, scenarios_list):
     campaign_id = campaign_name.strip().replace(" ", "_")

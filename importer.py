@@ -1,10 +1,12 @@
 import re
 from pathlib import Path
 
+
 def parse_captains_from_map(map_text):
     positions = set(re.findall(r'\b\d+\b', map_text))
     valid_teams = [int(p) for p in positions if int(p) > 0]
     return len(valid_teams) if valid_teams else 0
+
 
 def import_campaign_folder(folder_path):
     root_path = Path(folder_path).absolute()
