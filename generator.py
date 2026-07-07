@@ -76,8 +76,17 @@ def generate_campaign_files(campaign_name, scenarios_list):
 [campaign]
     id={campaign_id}
     name=_"{campaign_name}"
-    define=CAMPAIGN_{campaign_id.upper()}
+    rank={app_state.state.get('campaign_rank', '15')}
+    icon="{app_state.state.get('campaign_icon', '')}"
+    image="{app_state.state.get('campaign_image', '')}"
     first_scenario={first_scen_id}
+    define=CAMPAIGN_{campaign_id.upper()}
+    description=_"{app_state.state.get('campaign_description', '')}"
+    
+    {{CAMPAIGN_DIFFICULTY EASY "{app_state.state.get('easy_img', '')}" ( _ "{app_state.state.get('easy_label', '')}") ( _ "Easy")}}
+    {{CAMPAIGN_DIFFICULTY NORMAL "{app_state.state.get('normal_img', '')}" ( _ "{app_state.state.get('normal_label', '')}") ( _ "Normal")}}
+    {{CAMPAIGN_DIFFICULTY HARD "{app_state.state.get('hard_img', '')}" ( _ "{app_state.state.get('hard_label', '')}") ( _ "Hard")}}
+    {{DEFAULT_DIFFICULTY}}
 [/campaign]
 
 #ifdef CAMPAIGN_{campaign_id.upper()}
@@ -92,7 +101,6 @@ def generate_campaign_files(campaign_name, scenarios_list):
         
     for i, s in enumerate(scenarios_list):
         scen_num = f"{i+1:02d}"
-        
         clean_title = re.sub(r'[^a-zA-Z0-9\s_]', '', s["title"])
         title_slug = clean_title.strip().replace(" ", "_")
         scen_id = f"{scen_num}_{title_slug}"
@@ -114,8 +122,8 @@ def generate_campaign_files(campaign_name, scenarios_list):
     controller={ev.get('controller', 'human')}
     team_name={ev.get('team_name', 'heroes')}
     user_team_name=_"{ev.get('team_name', 'heroes')}"
-    gold={ev.get('gold', '100')}
-    income={ev.get('income', '0')}
+    {{GOLD {ev.get('gold_easy', '200')} {ev.get('gold_normal', '150')} {ev.get('gold_hard', '100')}}}
+    {{INCOME {ev.get('income_easy', '2')} {ev.get('income_normal', '1')} {ev.get('income_hard', '0')}}}
     type="Elvish Captain"
     canrecruit=yes
 [/side]"""
@@ -141,20 +149,14 @@ def generate_campaign_files(campaign_name, scenarios_list):
     canrecruit=yes
 [/side]"""
 
-        if (i + 1) < len(scenarios_list):
-            next_s = scenarios_list[i+1]
-            next_clean = re.sub(r'[^a-zA-Z0-9\s_]', '', next_s["title"])
-            next_slug = next_clean.strip().replace(" ", "_")
-            next_scen = f"{i+2:02d}_{next_slug}"
-        else:
-            next_scen = "null"
+        next_scen = f"{campaign_id}_{i+2:02d}" if (i + 1) < len(scenarios_list) else "null"
         
         scenario_cfg_raw = f"""
 [scenario]
     id={scen_id}
     name=_"{s['title']}"
     map_data="{{~add-ons/{campaign_id}/maps/{map_file_name}}}"
-    turns=30
+    {{TURNS {s.get('turns_easy', '24')} {s.get('turns_normal', '22')} {s.get('turns_hard', '20')}}}
     next_scenario={next_scen}
     
     {side_blocks}
@@ -166,4 +168,3 @@ def generate_campaign_files(campaign_name, scenarios_list):
             f.write(format_wml(scenario_cfg_raw))
             
     return export_root
-

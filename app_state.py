@@ -1,7 +1,18 @@
 state = {
     "campaign_name": "My Epic Campaign",
+    "campaign_description": "An epic adventure awaits...",
+    "campaign_rank": "15",
+    "campaign_icon": "units/elves-wood/lord.png",
+    "campaign_image": "data/add-ons/An_Orcish_Incursion/images/campaign_image.png",
+    "easy_img": "units/elves-wood/fighter.png",
+    "normal_img": "units/elves-wood/lord.png",
+    "hard_img": "units/elves-wood/high-lord.png",
+    "easy_label": "Beginner",
+    "normal_label": "Normal",
+    "hard_label": "Challenging",
     "scenarios": [],           
     "current_index": None,     
+    "view_mode": "scenario",   
     "scenario_list_frame": None,
     "center_content_frame": None,
     "scenario_title_input": None

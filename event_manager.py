@@ -19,10 +19,11 @@ def handle_add_event(event_type, container_frame):
         "messages": [],
         "side_number": "1",
         "controller": "human",
-        "gold": "100",
-        "income": "0",
-        "team_name": "heroes"
+        "team_name": "heroes",
+        "gold_easy": "200", "gold_normal": "150", "gold_hard": "100",
+        "income_easy": "2", "income_normal": "1", "income_hard": "0"
     }
+
     
     if event_type == "prestart":
         new_event["objectives"] = [
@@ -138,19 +139,23 @@ def render_metadata_panel(parent_frame, event_idx, event_data, container_frame):
 
         gold_row = ctk.CTkFrame(scroll_pane, fg_color="transparent")
         gold_row.pack(fill="x", pady=4, anchor="w")
-        ctk.CTkLabel(gold_row, text="Starting Gold:", font=("Arial", 12, "bold"), width=100, anchor="w").pack(side="left")
-        gold_ent = ctk.CTkEntry(gold_row, width=80)
-        gold_ent.insert(0, event_data.get("gold", "100"))
-        gold_ent.pack(side="left")
-        gold_ent.bind("<KeyRelease>", lambda e: save_event_inputs(event_idx, "gold", gold_ent.get()))
+        ctk.CTkLabel(gold_row, text="Gold (Easy/Normal/Hard):", font=("Arial", 12, "bold"), width=150, anchor="w").pack(side="left")
+        ge = ctk.CTkEntry(gold_row, width=60); ge.insert(0, event_data.get("gold_easy", "200")); ge.pack(side="left", padx=2)
+        ge.bind("<KeyRelease>", lambda e: save_event_inputs(event_idx, "gold_easy", ge.get()))
+        gn = ctk.CTkEntry(gold_row, width=60); gn.insert(0, event_data.get("gold_normal", "150")); gn.pack(side="left", padx=2)
+        gn.bind("<KeyRelease>", lambda e: save_event_inputs(event_idx, "gold_normal", gn.get()))
+        gh = ctk.CTkEntry(gold_row, width=60); gh.insert(0, event_data.get("gold_hard", "100")); gh.pack(side="left", padx=2)
+        gh.bind("<KeyRelease>", lambda e: save_event_inputs(event_idx, "gold_hard", gh.get()))
 
         inc_row = ctk.CTkFrame(scroll_pane, fg_color="transparent")
         inc_row.pack(fill="x", pady=4, anchor="w")
-        ctk.CTkLabel(inc_row, text="Base Income:", font=("Arial", 12, "bold"), width=100, anchor="w").pack(side="left")
-        inc_ent = ctk.CTkEntry(inc_row, width=80)
-        inc_ent.insert(0, event_data.get("income", "0"))
-        inc_ent.pack(side="left")
-        inc_ent.bind("<KeyRelease>", lambda e: save_event_inputs(event_idx, "income", inc_ent.get()))
+        ctk.CTkLabel(inc_row, text="Income (Easy/Normal/Hard):", font=("Arial", 12, "bold"), width=150, anchor="w").pack(side="left")
+        ie = ctk.CTkEntry(inc_row, width=60); ie.insert(0, event_data.get("income_easy", "2")); ie.pack(side="left", padx=2)
+        ie.bind("<KeyRelease>", lambda e: save_event_inputs(event_idx, "income_easy", ie.get()))
+        in_ = ctk.CTkEntry(inc_row, width=60); in_.insert(0, event_data.get("income_normal", "1")); in_.pack(side="left", padx=2)
+        in_.bind("<KeyRelease>", lambda e: save_event_inputs(event_idx, "income_normal", in_.get()))
+        ih = ctk.CTkEntry(inc_row, width=60); ih.insert(0, event_data.get("income_hard", "0")); ih.pack(side="left", padx=2)
+        ih.bind("<KeyRelease>", lambda e: save_event_inputs(event_idx, "income_hard", ih.get()))
 
     if event_data["type"] == "prestart":
         ctk.CTkLabel(scroll_pane, text="Scenario Objectives:", font=("Arial", 12, "bold")).pack(anchor="w", pady=(10, 5))

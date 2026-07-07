@@ -14,6 +14,13 @@ def save_active_inputs():
             app_state.state["scenarios"][idx]["title"] = app_state.state["scenario_title_input"].get()
 
 
+def switch_to_global():
+        app_state.state["view_mode"] = "campaign"
+        app_state.state["current_index"] = None
+        refresh_sidebar()
+        render_campaign_settings_panel()
+
+
 def handle_add():
     save_active_inputs()
     blank_scenario = {
@@ -21,13 +28,17 @@ def handle_add():
         "map_name": None,
         "map_data": "",
         "captains_count": 0,
+        "turns_easy": "24",
+        "turns_normal": "22",
+        "turns_hard": "20",
         "events": []
     }
     app_state.state["scenarios"].append(blank_scenario)
     app_state.state["current_index"] = len(app_state.state["scenarios"]) - 1
+    app_state.state["view_mode"] = "scenario"
     refresh_sidebar()
     render_workspace()
-
+    
 
 def handle_delete(idx):
     if 0 <= idx < len(app_state.state["scenarios"]):
@@ -162,6 +173,82 @@ def refresh_sidebar():
         nav_btn.pack(side="left", fill="x", expand=True)
 
 
+def handle_img_upload(key, entry_widget):
+    file_path = filedialog.askopenfilename(
+        title="Select Image File",
+        filetypes=[("Image Files", "*.png;*.jpg;*.jpeg"), ("All Files", "*.*")]
+    )
+    if file_path:
+        filename = Path(file_path).name
+        app_state.state[key] = f"units/{filename}"
+        entry_widget.delete(0, "end")
+        entry_widget.insert(0, app_state.state[key])
+
+
+def render_campaign_settings_panel():
+    for widget in app_state.state["center_content_frame"].winfo_children():
+        widget.destroy()
+        
+    canvas = ctk.CTkScrollableFrame(app_state.state["center_content_frame"], fg_color="transparent")
+    canvas.pack(fill="both", expand=True)
+        
+    ctk.CTkLabel(canvas, text="Global Campaign Settings", font=("Arial", 16, "bold")).pack(anchor="w", pady=(10, 15))
+    
+    rank_row = ctk.CTkFrame(canvas, fg_color="transparent")
+    rank_row.pack(fill="x", pady=4, anchor="w")
+    ctk.CTkLabel(rank_row, text="Rank:", font=("Arial", 12, "bold"), width=130, anchor="w").pack(side="left")
+    rank_ent = ctk.CTkEntry(rank_row, width=60)
+    rank_ent.insert(0, app_state.state.get("campaign_rank", "15"))
+    rank_ent.pack(side="left", padx=5)
+    rank_ent.bind("<KeyRelease>", lambda e: app_state.state.update({"campaign_rank": rank_ent.get()}))
+    
+    media_fields = [
+        ("Campaign Icon:", "campaign_icon"),
+        ("Campaign Image:", "campaign_image")
+    ]
+    
+    for label_text, state_key in media_fields:
+        row = ctk.CTkFrame(canvas, fg_color="transparent")
+        row.pack(fill="x", pady=4, anchor="w")
+        ctk.CTkLabel(row, text=label_text, font=("Arial", 12, "bold"), width=130, anchor="w").pack(side="left")
+        
+        ent = ctk.CTkEntry(row, width=300)
+        ent.insert(0, app_state.state.get(state_key, ""))
+        ent.pack(side="left", padx=5)
+        ent.bind("<KeyRelease>", lambda e, k=state_key, widget=ent: app_state.state.update({k: widget.get()}))
+        
+        up_btn = ctk.CTkButton(row, text="📂 Upload", width=70, command=lambda k=state_key, widget=ent: handle_img_upload(k, widget))
+        up_btn.pack(side="left", padx=5)
+        
+    ctk.CTkLabel(canvas, text="Campaign Description:", font=("Arial", 12, "bold")).pack(anchor="w", pady=(15, 2))
+    desc_box = ctk.CTkTextbox(canvas, width=500, height=80)
+    desc_box.insert("1.0", app_state.state["campaign_description"])
+    desc_box.pack(anchor="w", pady=(0, 15))
+    desc_box.bind("<KeyRelease>", lambda e: app_state.state.update({"campaign_description": desc_box.get("1.0", "end-1c")}))
+    
+    ctk.CTkLabel(canvas, text="Campaign Difficulties:", font=("Arial", 12, "bold")).pack(anchor="w", pady=(5, 5))
+    
+    modes = [("Easy", "easy_label", "easy_img"), ("Normal", "normal_label", "normal_img"), ("Hard", "hard_label", "hard_img")]
+    for title, lbl_key, img_key in modes:
+        row = ctk.CTkFrame(canvas, fg_color="#2b2b2b")
+        row.pack(fill="x", pady=4)
+        
+        ctk.CTkLabel(row, text=f"{title}:", font=("Arial", 12, "bold"), width=70, anchor="w").pack(side="left", padx=10, pady=8)
+        
+        lbl_ent = ctk.CTkEntry(row, width=120)
+        lbl_ent.insert(0, app_state.state[lbl_key])
+        lbl_ent.pack(side="left", padx=5, pady=8)
+        lbl_ent.bind("<KeyRelease>", lambda e, k=lbl_key, widget=lbl_ent: app_state.state.update({k: widget.get()}))
+        
+        img_ent = ctk.CTkEntry(row, width=250)
+        img_ent.insert(0, app_state.state[img_key])
+        img_ent.pack(side="left", padx=5, pady=8)
+        img_ent.bind("<KeyRelease>", lambda e, k=img_key, widget=img_ent: app_state.state.update({k: widget.get()}))
+        
+        up_btn = ctk.CTkButton(row, text="📂 Upload", width=70, command=lambda k=img_key, widget=img_ent: handle_img_upload(k, widget))
+        up_btn.pack(side="left", padx=5, pady=8)
+
+
 def render_workspace():
     for widget in app_state.state["center_content_frame"].winfo_children():
         widget.destroy()
@@ -194,21 +281,29 @@ def render_workspace():
     upload_btn.pack(side="left", padx=(10, 0))
     
     if data["map_name"]:
-        status_string = f"Linked File: {data['map_name']} (Verified: Extracted {data['captains_count']} Starting Team Slots)"
-        status_color = "green"
-        status_font = ("Arial", 12, "bold")
-    else:
-        status_string = "Status: No Map Assigned (Defaulting scenario generation to 2 player sides)"
-        status_color = "#D97706"
-        status_font = ("Arial", 12, "italic")
+        turns_row = ctk.CTkFrame(app_state.state["center_content_frame"], fg_color="transparent")
+        turns_row.pack(fill="x", pady=10, anchor="w")
+        ctk.CTkLabel(turns_row, text="Turn Limits (E/N/H):", font=("Arial", 13, "bold"), width=130, anchor="w").pack(side="left")
         
-    status_lbl = ctk.CTkLabel(map_row, text=status_string, text_color=status_color, font=status_font, anchor="w")
-    status_lbl.pack(side="left", padx=15)
+        t_easy = ctk.CTkEntry(turns_row, width=50)
+        t_easy.insert(0, data.get("turns_easy", "24"))
+        t_easy.pack(side="left", padx=2)
+        t_easy.bind("<KeyRelease>", lambda e: data.update({"turns_easy": t_easy.get()}))
+        
+        t_norm = ctk.CTkEntry(turns_row, width=50)
+        t_norm.insert(0, data.get("turns_normal", "22"))
+        t_norm.pack(side="left", padx=2)
+        t_norm.bind("<KeyRelease>", lambda e: data.update({"turns_normal": t_norm.get()}))
+        
+        t_hard = ctk.CTkEntry(turns_row, width=50)
+        t_hard.insert(0, data.get("turns_hard", "20"))
+        t_hard.pack(side="left", padx=2)
+        t_hard.bind("<KeyRelease>", lambda e: data.update({"turns_hard": t_hard.get()}))
 
     events_container = ctk.CTkFrame(app_state.state["center_content_frame"], fg_color="transparent")
     events_container.pack(fill="both", expand=True, pady=(15, 0))
-    
     event_manager.render_events_sidebar(events_container)
+
 
 
 def boot():
@@ -222,7 +317,8 @@ def boot():
     
     campaign_name_frame = ctk.CTkFrame(sidebar, fg_color="transparent")
     campaign_name_frame.pack(fill="x", pady=(15, 10), padx=10)
-    
+    ctk.CTkButton(sidebar, text="⚙️ Global Campaign Configs", fg_color="#3b3b3b", command=switch_to_global).pack(fill="x", padx=10, pady=(5, 10))
+
     app_state.campaign_name_input = ctk.CTkEntry(campaign_name_frame, font=("Arial", 14, "bold"))
     app_state.campaign_name_input.insert(0, app_state.state["campaign_name"])
     app_state.campaign_name_input.pack(fill="x")
