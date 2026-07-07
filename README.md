@@ -13,10 +13,4 @@
 
 OR 
 
-1. Download and run 'Wesnoth_Campaign_Creator.exe'
-
-OR
-
-1. pip install pyinstaller
-2. pyinstaller --noconsole --onefile --icon="wesnoth_plus.ico" --name="Wesnoth_Campaign_Creator" entry.py
-3. run 'Wesnoth_Campaign_Creator.exe'
+1. Download and run 'Wesnoth_Campaign_Creator'
