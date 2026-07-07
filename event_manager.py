@@ -200,9 +200,9 @@ def render_metadata_panel(parent_frame, event_idx, event_data, container_frame):
                 f_btn = ctk.CTkButton(folder_frame, text=f"📁 {folder_name} ({len(units_list)})", fg_color="#2b2b2b", hover_color="#3b3b3b", anchor="w", height=28, command=toggle_folder)
                 f_btn.pack(fill="x")
                 
-                for unit in units_list:
-                    u_btn = ctk.CTkButton(content_frame, text=unit, fg_color="transparent", text_color="#b0b0b0", hover_color="#3b3b3b", anchor="w", height=24,
-                                          command=lambda u=unit: pick_unit(u))
+                for raw_id, display_str in units_list:
+                    u_btn = ctk.CTkButton(content_frame, text=display_str, fg_color="transparent", text_color="#b0b0b0", hover_color="#3b3b3b", anchor="w", height=24,
+                                          command=lambda uid=raw_id: pick_unit(uid))
                     u_btn.pack(fill="x", pady=1)
                 
         ctk.CTkButton(type_row, text="⚙️ Select Type", width=110, height=22, command=open_captain_selector).pack(side="left", padx=(0, 10))
@@ -278,12 +278,12 @@ def render_metadata_panel(parent_frame, event_idx, event_data, container_frame):
                 f_btn = ctk.CTkButton(folder_frame, text=f"📁 {folder_name} ({len(units_list)})", fg_color="#2b2b2b", hover_color="#3b3b3b", anchor="w", height=28, command=toggle_folder)
                 f_btn.pack(fill="x")
                 
-                for unit in units_list:
+                for raw_id, display_str in units_list:
                     u_row = ctk.CTkFrame(content_frame, fg_color="transparent")
                     u_row.pack(fill="x", pady=1)
-                    chk_var = ctk.IntVar(value=1 if unit in active_list else 0)
-                    chk = ctk.CTkCheckBox(u_row, text=unit, variable=chk_var, font=("Arial", 11))
-                    chk.configure(command=lambda u=unit, v=chk_var: toggle_unit(u, v))
+                    chk_var = ctk.IntVar(value=1 if raw_id in active_list else 0)
+                    chk = ctk.CTkCheckBox(u_row, text=display_str, variable=chk_var, font=("Arial", 11))
+                    chk.configure(command=lambda uid=raw_id, v=chk_var: toggle_unit(uid, v))
                     chk.pack(side="left", padx=5)
                 
         ctk.CTkButton(rec_row, text="⚙️ Choose Units", width=110, height=22, command=open_recruit_selector).pack(side="left")

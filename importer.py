@@ -80,39 +80,54 @@ def discover_local_units():
     if app_state.state["extra_addon_path"]:
         scan_tasks.append(("Addon", Path(app_state.state["extra_addon_path"]) / "units"))
         scan_tasks.append(("Addon", Path(app_state.state["extra_addon_path"]) / "Units"))
-    
+        
     for origin_type, path in scan_tasks:
         if path.exists():
             for cfg_file in path.glob("**/*.cfg"):
                 try:
+                    uid, lvl = None, "0"
                     with open(cfg_file, "r", encoding="utf-8") as f:
                         for line in f:
                             cleaned = line.strip()
                             if cleaned.startswith("id=") and not cleaned.startswith("#"):
                                 uid = cleaned.split("=")[1].strip().strip('"').strip("'")
-                                if not uid.startswith("$") and uid not in ["unit", "second_unit"]:
-                                    if origin_type == "Core":
-                                        folder_name = cfg_file.parent.name.replace("-", " ").title()
-                                        category = f"Core: {folder_name}"
-                                    elif origin_type == "Campaign":
-                                        category = "Campaign Units"
-                                    else:
-                                        category = "Units Add-on Root"
-                                        
-                                    if category not in grouped_units:
-                                        grouped_units[category] = set()
-                                    grouped_units[category].add(uid)
+                            elif cleaned.startswith("level=") and not cleaned.startswith("#"):
+                                lvl = cleaned.split("=")[1].strip().strip('"').strip("'")
+                                
+                            if uid and "level=" in line:
                                 break
+                                
+                    if uid and not uid.startswith("$") and uid not in ["unit", "second_unit"]:
+                        folder_name = cfg_file.parent.name.replace("-", " ").title()
+                        
+                        if origin_type == "Core":
+                            category = f"Core: {folder_name}"
+                        elif origin_type == "Campaign":
+                            category = f"Campaign: {folder_name}"
+                        else:
+                            category = f"Addon: {folder_name}"
+                            
+                        if category not in grouped_units:
+                            grouped_units[category] = set()
+                        
+                        display_string = f"{uid} [{lvl}]"
+                        grouped_units[category].add((uid, display_string))
                 except Exception:
                     continue
                     
     final_dict = {}
     for cat, u_set in sorted(grouped_units.items()):
         if u_set:
-            final_dict[cat] = sorted(list(u_set))
+            final_dict[cat] = sorted(list(u_set), key=lambda x: x[0])
             
     if not final_dict:
-        final_dict["Default Units"] = ["Orcish Archer", "Orcish Grunt", "Wolf Rider", "Elvish Captain", "Orcish Warrior"]
+        final_dict["Default Units"] = [
+            ("Orcish Archer", "Orcish Archer [1]"),
+            ("Orcish Grunt", "Orcish Grunt [1]"),
+            ("Wolf Rider", "Wolf Rider [1]"),
+            ("Elvish Captain", "Elvish Captain [2]"),
+            ("Orcish Warrior", "Orcish Warrior [2]")
+        ]
         
     app_state.state["discovered_units"] = final_dict
     return final_dict
