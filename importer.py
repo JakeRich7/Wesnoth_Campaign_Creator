@@ -114,7 +114,31 @@ def import_campaign_folder(folder_path):
             else:
                 map_name = None
                 
-            scen_events = parse_events_from_wml(content)
+            scen_events = []
+            
+            side_blocks = re.findall(r'\[side\](.*?)\[/side\]', content, re.DOTALL)
+            for s_block in side_blocks:
+                side_m = re.search(r'side\s*=\s*(\d+)', s_block)
+                ctrl_m = re.search(r'controller\s*=\s*(\w+)', s_block)
+                team_m = re.search(r'team_name\s*=\s*(\w+)', s_block)
+                gold_m = re.search(r'gold\s*=\s*(\d+)', s_block)
+                inc_m = re.search(r'income\s*=\s*(\d+)', s_block)
+                
+                if side_m:
+                    scen_events.append({
+                        "type": "side",
+                        "side_number": side_m.group(1),
+                        "controller": ctrl_m.group(1) if ctrl_m else "human",
+                        "team_name": team_m.group(1) if team_m else "heroes",
+                        "gold": gold_m.group(1) if gold_m else "100",
+                        "income": inc_m.group(1) if inc_m else "0",
+                        "turn_number": "",
+                        "filter_id": "",
+                        "objectives": [],
+                        "messages": []
+                    })
+                    
+            scen_events.extend(parse_events_from_wml(content))
             
             imported_scenarios.append({
                 "title": title,
@@ -127,3 +151,4 @@ def import_campaign_folder(folder_path):
         except Exception:
             continue
     return imported_scenarios
+

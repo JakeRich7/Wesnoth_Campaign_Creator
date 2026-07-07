@@ -104,15 +104,40 @@ def generate_campaign_files(campaign_name, scenarios_list):
                 f.write(s["map_data"])
                 
         side_blocks = ""
-        for side_num in range(1, s["captains_count"] + 1):
-            side_blocks += f"""
+        events_wml = ""
+        
+        for ev in s.get("events", []):
+            if ev["type"] == "side":
+                side_blocks += f"""
 [side]
-    side={side_num}
-    controller={"human" if side_num == 1 else "ai"}
-    team_name={"heroes" if side_num == 1 else "villains"}
-    user_team_name=_"{"Team " + str(side_num)}"
-    type={"Elvish Captain" if side_num == 1 else "Orcish Warrior"}
-    id=captain_{side_num}
+    side={ev.get('side_number', '1')}
+    controller={ev.get('controller', 'human')}
+    team_name={ev.get('team_name', 'heroes')}
+    user_team_name=_"{ev.get('team_name', 'heroes')}"
+    gold={ev.get('gold', '100')}
+    income={ev.get('income', '0')}
+    type="Elvish Captain"
+    canrecruit=yes
+[/side]"""
+            else:
+                events_wml += compile_event_to_wml(ev) + "\n"
+
+        if not side_blocks:
+            side_blocks = """
+[side]
+    side=1
+    controller=human
+    team_name=heroes
+    user_team_name=_"heroes"
+    type="Elvish Captain"
+    canrecruit=yes
+[/side]
+[side]
+    side=2
+    controller=ai
+    team_name=villains
+    user_team_name=_"villains"
+    type="Orcish Warrior"
     canrecruit=yes
 [/side]"""
 
@@ -123,10 +148,6 @@ def generate_campaign_files(campaign_name, scenarios_list):
             next_scen = f"{i+2:02d}_{next_slug}"
         else:
             next_scen = "null"
-            
-        events_wml = ""
-        for ev in s.get("events", []):
-            events_wml += compile_event_to_wml(ev) + "\n"
         
         scenario_cfg_raw = f"""
 [scenario]
@@ -145,3 +166,4 @@ def generate_campaign_files(campaign_name, scenarios_list):
             f.write(format_wml(scenario_cfg_raw))
             
     return export_root
+

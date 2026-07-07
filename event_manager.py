@@ -1,7 +1,7 @@
 import customtkinter as ctk
 import app_state
 
-EVENT_TYPES = ["prestart", "start", "die", "last_breath", "turn", "victory"]
+EVENT_TYPES = ["side", "prestart", "start", "die", "last_breath", "turn", "victory"]
 
 def handle_add_event(event_type, container_frame):
     idx = app_state.state["current_index"]
@@ -16,7 +16,12 @@ def handle_add_event(event_type, container_frame):
         "turn_number": "1" if event_type == "turn" else "",
         "filter_id": "",
         "objectives": [],
-        "messages": []
+        "messages": [],
+        "side_number": "1",
+        "controller": "human",
+        "gold": "100",
+        "income": "0",
+        "team_name": "heroes"
     }
     
     if event_type == "prestart":
@@ -106,6 +111,47 @@ def render_metadata_panel(parent_frame, event_idx, event_data, container_frame):
         filter_entry.pack(side="left")
         filter_entry.bind("<KeyRelease>", lambda e: save_event_inputs(event_idx, "filter_id", filter_entry.get()))
 
+    if event_data["type"] == "side":
+        num_row = ctk.CTkFrame(scroll_pane, fg_color="transparent")
+        num_row.pack(fill="x", pady=4, anchor="w")
+        ctk.CTkLabel(num_row, text="Side Number:", font=("Arial", 12, "bold"), width=100, anchor="w").pack(side="left")
+        num_ent = ctk.CTkEntry(num_row, width=80)
+        num_ent.insert(0, event_data.get("side_number", "1"))
+        num_ent.pack(side="left")
+        num_ent.bind("<KeyRelease>", lambda e: save_event_inputs(event_idx, "side_number", num_ent.get()))
+
+        ctrl_row = ctk.CTkFrame(scroll_pane, fg_color="transparent")
+        ctrl_row.pack(fill="x", pady=4, anchor="w")
+        ctk.CTkLabel(ctrl_row, text="Controller:", font=("Arial", 12, "bold"), width=100, anchor="w").pack(side="left")
+        ctrl_menu = ctk.CTkOptionMenu(ctrl_row, values=["human", "ai"], width=100)
+        ctrl_menu.set(event_data.get("controller", "human"))
+        ctrl_menu.pack(side="left")
+        ctrl_menu.configure(command=lambda val: save_event_inputs(event_idx, "controller", val))
+
+        team_row = ctk.CTkFrame(scroll_pane, fg_color="transparent")
+        team_row.pack(fill="x", pady=4, anchor="w")
+        ctk.CTkLabel(team_row, text="Team Name:", font=("Arial", 12, "bold"), width=100, anchor="w").pack(side="left")
+        team_ent = ctk.CTkEntry(team_row, width=150)
+        team_ent.insert(0, event_data.get("team_name", "heroes"))
+        team_ent.pack(side="left")
+        team_ent.bind("<KeyRelease>", lambda e: save_event_inputs(event_idx, "team_name", team_ent.get()))
+
+        gold_row = ctk.CTkFrame(scroll_pane, fg_color="transparent")
+        gold_row.pack(fill="x", pady=4, anchor="w")
+        ctk.CTkLabel(gold_row, text="Starting Gold:", font=("Arial", 12, "bold"), width=100, anchor="w").pack(side="left")
+        gold_ent = ctk.CTkEntry(gold_row, width=80)
+        gold_ent.insert(0, event_data.get("gold", "100"))
+        gold_ent.pack(side="left")
+        gold_ent.bind("<KeyRelease>", lambda e: save_event_inputs(event_idx, "gold", gold_ent.get()))
+
+        inc_row = ctk.CTkFrame(scroll_pane, fg_color="transparent")
+        inc_row.pack(fill="x", pady=4, anchor="w")
+        ctk.CTkLabel(inc_row, text="Base Income:", font=("Arial", 12, "bold"), width=100, anchor="w").pack(side="left")
+        inc_ent = ctk.CTkEntry(inc_row, width=80)
+        inc_ent.insert(0, event_data.get("income", "0"))
+        inc_ent.pack(side="left")
+        inc_ent.bind("<KeyRelease>", lambda e: save_event_inputs(event_idx, "income", inc_ent.get()))
+
     if event_data["type"] == "prestart":
         ctk.CTkLabel(scroll_pane, text="Scenario Objectives:", font=("Arial", 12, "bold")).pack(anchor="w", pady=(10, 5))
         for o_idx, obj in enumerate(event_data.get("objectives", [])):
@@ -125,28 +171,29 @@ def render_metadata_panel(parent_frame, event_idx, event_data, container_frame):
             ctk.CTkButton(o_row, text="🗑️", width=24, fg_color="transparent", text_color="#A83232", command=lambda oi=o_idx: delete_objective_row(event_idx, oi, container_frame)).pack(side="left")
         ctk.CTkButton(scroll_pane, text="➕ Add Objective", width=120, fg_color="#2b2b2b", command=lambda: add_objective_row(event_idx, container_frame)).pack(anchor="w", pady=5)
 
-    ctk.CTkLabel(scroll_pane, text="Event Messages / Dialogue Stack:", font=("Arial", 12, "bold")).pack(anchor="w", pady=(15, 5))
-    for m_idx, msg in enumerate(event_data.get("messages", [])):
-        m_box = ctk.CTkFrame(scroll_pane, fg_color="#1a1a1a")
-        m_box.pack(fill="x", pady=4, padx=5)
-        
-        m_hdr = ctk.CTkFrame(m_box, fg_color="transparent")
-        m_hdr.pack(fill="x")
-        ctk.CTkLabel(m_hdr, text="Speaker ID:", font=("Arial", 11, "bold")).pack(side="left")
-        
-        spk_ent = ctk.CTkEntry(m_hdr, width=120, height=20, font=("Arial", 11))
-        spk_ent.insert(0, msg["speaker"])
-        spk_ent.pack(side="left", padx=5)
-        spk_ent.bind("<KeyRelease>", lambda e, mi=m_idx, se=spk_ent: event_data["messages"][mi].update({"speaker": se.get()}))
-        
-        ctk.CTkButton(m_hdr, text="🗑️ Message", width=60, height=18, fg_color="transparent", text_color="#A83232", command=lambda mi=m_idx: delete_message_row(event_idx, mi, container_frame)).pack(side="right")
-        
-        txt_box = ctk.CTkTextbox(m_box, width=420, height=45, font=("Arial", 11))
-        txt_box.insert("1.0", msg["message"])
-        txt_box.pack(fill="x", pady=(3, 0))
-        txt_box.bind("<KeyRelease>", lambda e, mi=m_idx, tb=txt_box: event_data["messages"][mi].update({"message": tb.get("1.0", "end-1c")}))
-        
-    ctk.CTkButton(scroll_pane, text="➕ Add Message Block", width=140, fg_color="#2b2b2b", command=lambda: add_message_row(event_idx, container_frame)).pack(anchor="w", pady=5)
+    if event_data["type"] != "side":
+        ctk.CTkLabel(scroll_pane, text="Event Messages / Dialogue Stack:", font=("Arial", 12, "bold")).pack(anchor="w", pady=(15, 5))
+        for m_idx, msg in enumerate(event_data.get("messages", [])):
+            m_box = ctk.CTkFrame(scroll_pane, fg_color="#1a1a1a")
+            m_box.pack(fill="x", pady=4, padx=5)
+            
+            m_hdr = ctk.CTkFrame(m_box, fg_color="transparent")
+            m_hdr.pack(fill="x")
+            ctk.CTkLabel(m_hdr, text="Speaker ID:", font=("Arial", 11, "bold")).pack(side="left")
+            
+            spk_ent = ctk.CTkEntry(m_hdr, width=120, height=20, font=("Arial", 11))
+            spk_ent.insert(0, msg["speaker"])
+            spk_ent.pack(side="left", padx=5)
+            spk_ent.bind("<KeyRelease>", lambda e, mi=m_idx, se=spk_ent: event_data["messages"][mi].update({"speaker": se.get()}))
+            
+            ctk.CTkButton(m_hdr, text="🗑️ Message", width=60, height=18, fg_color="transparent", text_color="#A83232", command=lambda mi=m_idx: delete_message_row(event_idx, mi, container_frame)).pack(side="right")
+            
+            txt_box = ctk.CTkTextbox(m_box, width=420, height=45, font=("Arial", 11))
+            txt_box.insert("1.0", msg["message"])
+            txt_box.pack(fill="x", pady=(3, 0))
+            txt_box.bind("<KeyRelease>", lambda e, mi=m_idx, tb=txt_box: event_data["messages"][mi].update({"message": tb.get("1.0", "end-1c")}))
+            
+        ctk.CTkButton(scroll_pane, text="➕ Add Message Block", width=140, fg_color="#2b2b2b", command=lambda: add_message_row(event_idx, container_frame)).pack(anchor="w", pady=5)
 
 def render_events_sidebar(parent_frame):
     for widget in parent_frame.winfo_children():
