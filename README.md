@@ -13,4 +13,4 @@
 
 OR 
 
-1. Download and run 'Wesnoth_Campaign_Creator'
+1. Download and run 'Wesnoth_Campaign_Creator' from 'Releases'
