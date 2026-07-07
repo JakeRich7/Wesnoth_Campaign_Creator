@@ -170,7 +170,7 @@ def render_metadata_panel(parent_frame, event_idx, event_data, container_frame):
         def open_captain_selector():
             sel_win = ctk.CTkToplevel()
             sel_win.title("Select Captain Unit Type")
-            sel_win.geometry("320x400")
+            sel_win.geometry("380x500")
             sel_win.attributes("-topmost", True)
             
             sub_scroll = ctk.CTkScrollableFrame(sel_win)
@@ -181,10 +181,29 @@ def render_metadata_panel(parent_frame, event_idx, event_data, container_frame):
                 type_display.configure(text=unit_name)
                 sel_win.destroy()
                 
-            for unit in unit_roster:
-                u_btn = ctk.CTkButton(sub_scroll, text=unit, fg_color="transparent", text_color="#b0b0b0", hover_color="#3b3b3b", anchor="w", height=24,
-                                      command=lambda u=unit: pick_unit(u))
-                u_btn.pack(fill="x", pady=1)
+            for folder_name, units_list in unit_roster.items():
+                # Shared container frame ensures the items stay locked to this row
+                row_wrapper = ctk.CTkFrame(sub_scroll, fg_color="transparent")
+                row_wrapper.pack(fill="x", pady=2)
+                
+                folder_frame = ctk.CTkFrame(row_wrapper, fg_color="transparent")
+                folder_frame.pack(fill="x")
+                
+                content_frame = ctk.CTkFrame(row_wrapper, fg_color="transparent")
+                
+                def toggle_folder(cf=content_frame):
+                    if cf.winfo_manager():
+                        cf.pack_forget()
+                    else:
+                        cf.pack(fill="x", padx=15, pady=2)
+                        
+                f_btn = ctk.CTkButton(folder_frame, text=f"📁 {folder_name} ({len(units_list)})", fg_color="#2b2b2b", hover_color="#3b3b3b", anchor="w", height=28, command=toggle_folder)
+                f_btn.pack(fill="x")
+                
+                for unit in units_list:
+                    u_btn = ctk.CTkButton(content_frame, text=unit, fg_color="transparent", text_color="#b0b0b0", hover_color="#3b3b3b", anchor="w", height=24,
+                                          command=lambda u=unit: pick_unit(u))
+                    u_btn.pack(fill="x", pady=1)
                 
         ctk.CTkButton(type_row, text="⚙️ Select Type", width=110, height=22, command=open_captain_selector).pack(side="left", padx=(0, 10))
         type_display.pack(side="left")
@@ -224,7 +243,7 @@ def render_metadata_panel(parent_frame, event_idx, event_data, container_frame):
         def open_recruit_selector():
             selector_win = ctk.CTkToplevel()
             selector_win.title("Select Recruit Options")
-            selector_win.geometry("350x450")
+            selector_win.geometry("380x500")
             selector_win.attributes("-topmost", True)
             
             sub_scroll = ctk.CTkScrollableFrame(selector_win)
@@ -240,13 +259,32 @@ def render_metadata_panel(parent_frame, event_idx, event_data, container_frame):
                 event_data["recruit_list"] = active_list
                 refresh_recruit_labels()
                 
-            for unit in unit_roster:
-                u_row = ctk.CTkFrame(sub_scroll, fg_color="transparent")
-                u_row.pack(fill="x", pady=2)
-                chk_var = ctk.IntVar(value=1 if unit in active_list else 0)
-                chk = ctk.CTkCheckBox(u_row, text=unit, variable=chk_var, font=("Arial", 11))
-                chk.configure(command=lambda u=unit, v=chk_var: toggle_unit(u, v))
-                chk.pack(side="left", padx=5)
+            for folder_name, units_list in unit_roster.items():
+                # Shared container frame ensures the items stay locked to this row
+                row_wrapper = ctk.CTkFrame(sub_scroll, fg_color="transparent")
+                row_wrapper.pack(fill="x", pady=2)
+                
+                folder_frame = ctk.CTkFrame(row_wrapper, fg_color="transparent")
+                folder_frame.pack(fill="x")
+                
+                content_frame = ctk.CTkFrame(row_wrapper, fg_color="transparent")
+                
+                def toggle_folder(cf=content_frame):
+                    if cf.winfo_manager():
+                        cf.pack_forget()
+                    else:
+                        cf.pack(fill="x", padx=15, pady=2)
+                        
+                f_btn = ctk.CTkButton(folder_frame, text=f"📁 {folder_name} ({len(units_list)})", fg_color="#2b2b2b", hover_color="#3b3b3b", anchor="w", height=28, command=toggle_folder)
+                f_btn.pack(fill="x")
+                
+                for unit in units_list:
+                    u_row = ctk.CTkFrame(content_frame, fg_color="transparent")
+                    u_row.pack(fill="x", pady=1)
+                    chk_var = ctk.IntVar(value=1 if unit in active_list else 0)
+                    chk = ctk.CTkCheckBox(u_row, text=unit, variable=chk_var, font=("Arial", 11))
+                    chk.configure(command=lambda u=unit, v=chk_var: toggle_unit(u, v))
+                    chk.pack(side="left", padx=5)
                 
         ctk.CTkButton(rec_row, text="⚙️ Choose Units", width=110, height=22, command=open_recruit_selector).pack(side="left")
         refresh_recruit_labels()
@@ -297,9 +335,11 @@ def render_metadata_panel(parent_frame, event_idx, event_data, container_frame):
             spk_menu.pack(side="left", padx=5)
             spk_menu.configure(command=lambda val, target=spk_ent, mi=m_idx: apply_speaker_select(val, target, mi))
             
-            ctk.CTkButton(m_hdr, text="🗑️ Message", width=60, height=18, fg_color="transparent", text_color="#A83232", command=lambda mi=m_idx: delete_message_row(event_idx, mi, container_frame)).pack(side="right", padx=(0, 5))
+            del_btn = ctk.CTkButton(m_hdr, text="🗑️", width=24, height=18, fg_color="transparent", text_color="#A83232", hover_color="#4a1a1a", font=("Arial", 11), anchor="w")
+            del_btn.configure(command=lambda mi=m_idx: delete_message_row(event_idx, mi, container_frame))
+            del_btn.pack(side="left", padx=(5, 0))
             
-            txt_box = ctk.CTkTextbox(m_box, width=420, height=48, font=("Arial", 13))
+            txt_box = ctk.CTkTextbox(m_box, width=420, height=55, font=("Arial", 13))
             txt_box.insert("1.0", msg["message"])
             txt_box.pack(fill="x", pady=(3, 5), padx=5)
             txt_box.bind("<KeyRelease>", lambda e, mi=m_idx, tb=txt_box: event_data["messages"][mi].update({"message": tb.get("1.0", "end-1c")}))

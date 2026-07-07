@@ -88,6 +88,8 @@ def handle_import():
     selected_dir = filedialog.askdirectory(title="Select Wesnoth Campaign Add-on Folder")
     
     if selected_dir:
+        app_state.state["imported_campaign_path"] = selected_dir
+        app_state.state["discovered_units"] = []
         scenarios = importer.import_campaign_folder(selected_dir)
         if not scenarios:
             messagebox.showwarning("Import Failed", "No valid .cfg scenario files were found inside this folder.")
@@ -346,7 +348,7 @@ def boot():
     ctk.set_appearance_mode("Dark")
     root = ctk.CTk()
     root.title("Wesnoth Campaign Maker")
-    root.geometry("1050x750")
+    root.geometry("1150x750")
     
     sidebar = ctk.CTkFrame(root, width=250, corner_radius=0)
     sidebar.pack(side="left", fill="y")

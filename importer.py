@@ -64,25 +64,24 @@ def parse_events_from_wml(content):
     return events
 
 def discover_local_units():
-    if app_state.state["discovered_units"]:
+    if app_state.state["discovered_units"] and isinstance(app_state.state["discovered_units"], dict):
         return app_state.state["discovered_units"]
         
-    unit_ids = set()
+    grouped_units = {}
     base_dir = Path(app_state.state["wesnoth_directory"])
-    
-    unit_paths = [base_dir / "data" / "core" / "units"]
+    scan_tasks = [
+        ("Core", base_dir / "data" / "core" / "units")
+    ]
     
     if app_state.state["imported_campaign_path"]:
-        local_campaign = Path(app_state.state["imported_campaign_path"])
-        unit_paths.append(local_campaign / "units")
-        unit_paths.append(local_campaign / "Units")
+        scan_tasks.append(("Campaign", Path(app_state.state["imported_campaign_path"]) / "units"))
+        scan_tasks.append(("Campaign", Path(app_state.state["imported_campaign_path"]) / "Units"))
         
     if app_state.state["extra_addon_path"]:
-        extra_addon = Path(app_state.state["extra_addon_path"])
-        unit_paths.append(extra_addon / "units")
-        unit_paths.append(extra_addon / "Units")
+        scan_tasks.append(("Addon", Path(app_state.state["extra_addon_path"]) / "units"))
+        scan_tasks.append(("Addon", Path(app_state.state["extra_addon_path"]) / "Units"))
     
-    for path in unit_paths:
+    for origin_type, path in scan_tasks:
         if path.exists():
             for cfg_file in path.glob("**/*.cfg"):
                 try:
@@ -91,15 +90,32 @@ def discover_local_units():
                             cleaned = line.strip()
                             if cleaned.startswith("id=") and not cleaned.startswith("#"):
                                 uid = cleaned.split("=")[1].strip().strip('"').strip("'")
-                                if not uid.startswith("$"):
-                                    unit_ids.add(uid)
+                                if not uid.startswith("$") and uid not in ["unit", "second_unit"]:
+                                    if origin_type == "Core":
+                                        folder_name = cfg_file.parent.name.replace("-", " ").title()
+                                        category = f"Core: {folder_name}"
+                                    elif origin_type == "Campaign":
+                                        category = "Campaign Units"
+                                    else:
+                                        category = "Units Add-on Root"
+                                        
+                                    if category not in grouped_units:
+                                        grouped_units[category] = set()
+                                    grouped_units[category].add(uid)
                                 break
                 except Exception:
                     continue
                     
-    final_list = sorted(list(unit_ids)) if unit_ids else ["Orcish Archer", "Orcish Grunt", "Wolf Rider", "Elvish Captain", "Orcish Warrior"]
-    app_state.state["discovered_units"] = final_list
-    return final_list
+    final_dict = {}
+    for cat, u_set in sorted(grouped_units.items()):
+        if u_set:
+            final_dict[cat] = sorted(list(u_set))
+            
+    if not final_dict:
+        final_dict["Default Units"] = ["Orcish Archer", "Orcish Grunt", "Wolf Rider", "Elvish Captain", "Orcish Warrior"]
+        
+    app_state.state["discovered_units"] = final_dict
+    return final_dict
 
 def import_campaign_folder(folder_path):
     root_path = Path(folder_path).absolute()
