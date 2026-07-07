@@ -1,8 +1,6 @@
 import re
 import shutil
 from pathlib import Path
-from importlib import import_module
-
 
 def format_wml(raw_text):
     formatted_lines = []
@@ -25,12 +23,38 @@ def format_wml(raw_text):
 
     return "\n".join(formatted_lines)
 
-
 def parse_captains_from_map(map_text):
     positions = set(re.findall(r'\b\d+\b', map_text))
     valid_teams = [int(p) for p in positions if int(p) > 0]
     return len(valid_teams) if valid_teams else 0
 
+def compile_event_to_wml(ev):
+    ev_type = ev["type"]
+    wml = ""
+    
+    if ev_type == "turn":
+        wml += f"[event]\nname=turn {ev.get('turn_number', '1')}\n"
+    else:
+        wml += f"[event]\nname={ev_type}\n"
+        
+    if ev_type in ["die", "last_breath"] and ev.get("filter_id"):
+        wml += f"[filter]\nid={ev['filter_id']}\n[/filter]\n"
+        
+    if ev_type == "prestart":
+        wml += "[objectives]\n"
+        for obj in ev.get("objectives", []):
+            wml += f"[objective]\ndescription= _ \"{obj['description']}\"\ncondition={obj['condition']}\n[/objective]\n"
+        wml += "{TURNS_RUN_OUT}\n[gold_carryover]\nbonus=yes\ncarryover_percentage=40\n[/gold_carryover]\n[/objectives]\n"
+        
+    for msg in ev.get("messages", []):
+        if msg.get("speaker") or msg.get("message"):
+            wml += f"[message]\nspeaker={msg.get('speaker', 'narrator')}\nmessage= _ \"{msg.get('message', '')}\"\n[/message]\n"
+            
+    if ev_type in ["die", "victory"]:
+        wml += "[endlevel]\nresult=victory\nbonus=yes\n{NEW_GOLD_CARRYOVER 40}\n[/endlevel]\n"
+        
+    wml += "[/event]\n"
+    return wml
 
 def generate_campaign_files(campaign_name, scenarios_list):
     campaign_id = campaign_name.strip().replace(" ", "_")
@@ -99,16 +123,11 @@ def generate_campaign_files(campaign_name, scenarios_list):
             next_scen = f"{i+2:02d}_{next_slug}"
         else:
             next_scen = "null"
-        
+            
         events_wml = ""
-        if "events" in s:
-            for ev in s["events"]:
-                try:
-                    mod = import_module(f"events.{ev['type']}")
-                    events_wml += mod.generate_wml(ev) + "\n"
-                except Exception:
-                    continue
-
+        for ev in s.get("events", []):
+            events_wml += compile_event_to_wml(ev) + "\n"
+        
         scenario_cfg_raw = f"""
 [scenario]
     id={scen_id}
@@ -118,6 +137,8 @@ def generate_campaign_files(campaign_name, scenarios_list):
     next_scenario={next_scen}
     
     {side_blocks}
+    
+    {events_wml}
 [/scenario]
 """
         with open(scenarios_dir / f"{scen_id}.cfg", "w", encoding="utf-8") as f:

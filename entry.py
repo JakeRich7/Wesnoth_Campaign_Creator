@@ -215,7 +215,7 @@ def boot():
     ctk.set_appearance_mode("Dark")
     root = ctk.CTk()
     root.title("Wesnoth Campaign Maker")
-    root.geometry("850x550")
+    root.geometry("1050x750")
     
     sidebar = ctk.CTkFrame(root, width=250, corner_radius=0)
     sidebar.pack(side="left", fill="y")

@@ -1,7 +1,7 @@
 import customtkinter as ctk
 import app_state
 
-EVENT_TYPES = ["start", "die", "last_breath", "turn"]
+EVENT_TYPES = ["prestart", "start", "die", "last_breath", "turn", "victory"]
 
 def handle_add_event(event_type, container_frame):
     idx = app_state.state["current_index"]
@@ -10,10 +10,21 @@ def handle_add_event(event_type, container_frame):
     scen = app_state.state["scenarios"][idx]
     if "events" not in scen:
         scen["events"] = []
+        
     new_event = {
         "type": event_type,
-        "turn_number": "1" if event_type == "turn" else ""
+        "turn_number": "1" if event_type == "turn" else "",
+        "filter_id": "",
+        "objectives": [],
+        "messages": []
     }
+    
+    if event_type == "prestart":
+        new_event["objectives"] = [
+            {"description": "Defeat the Enemy", "condition": "win"},
+            {"description": "Death of your Hero", "condition": "lose"}
+        ]
+        
     scen["events"].append(new_event)
     scen["active_event_index"] = len(scen["events"]) - 1
     render_events_sidebar(container_frame)
@@ -43,19 +54,99 @@ def save_event_inputs(event_idx, key, val):
         return
     app_state.state["scenarios"][idx]["events"][event_idx][key] = val
 
-def render_metadata_panel(parent_frame, event_idx, event_data):
-    ctk.CTkLabel(parent_frame, text=f"Event Configuration: {event_data['type'].upper()}", font=("Arial", 14, "bold")).pack(anchor="w", pady=(10, 15))
+def add_objective_row(event_idx, container_frame):
+    idx = app_state.state["current_index"]
+    if idx is None:
+        return
+    app_state.state["scenarios"][idx]["events"][event_idx]["objectives"].append({"description": "New Objective", "condition": "win"})
+    render_events_sidebar(container_frame)
+
+def delete_objective_row(event_idx, obj_idx, container_frame):
+    idx = app_state.state["current_index"]
+    if idx is None:
+        return
+    del app_state.state["scenarios"][idx]["events"][event_idx]["objectives"][obj_idx]
+    render_events_sidebar(container_frame)
+
+def add_message_row(event_idx, container_frame):
+    idx = app_state.state["current_index"]
+    if idx is None:
+        return
+    app_state.state["scenarios"][idx]["events"][event_idx]["messages"].append({"speaker": "narrator", "message": ""})
+    render_events_sidebar(container_frame)
+
+def delete_message_row(event_idx, msg_idx, container_frame):
+    idx = app_state.state["current_index"]
+    if idx is None:
+        return
+    del app_state.state["scenarios"][idx]["events"][event_idx]["messages"][msg_idx]
+    render_events_sidebar(container_frame)
+
+def render_metadata_panel(parent_frame, event_idx, event_data, container_frame):
+    scroll_pane = ctk.CTkScrollableFrame(parent_frame, fg_color="transparent")
+    scroll_pane.pack(fill="both", expand=True)
+
+    ctk.CTkLabel(scroll_pane, text=f"Event Configuration: {event_data['type'].upper()}", font=("Arial", 14, "bold")).pack(anchor="w", pady=(5, 10))
     
     if event_data["type"] == "turn":
-        row = ctk.CTkFrame(parent_frame, fg_color="transparent")
-        row.pack(fill="x", pady=5, anchor="w")
+        row = ctk.CTkFrame(scroll_pane, fg_color="transparent")
+        row.pack(fill="x", pady=4, anchor="w")
         ctk.CTkLabel(row, text="Turn Number:", font=("Arial", 12, "bold"), width=100, anchor="w").pack(side="left")
-        turn_entry = ctk.CTkEntry(row, width=100)
+        turn_entry = ctk.CTkEntry(row, width=80)
         turn_entry.insert(0, event_data["turn_number"])
         turn_entry.pack(side="left")
         turn_entry.bind("<KeyRelease>", lambda e: save_event_inputs(event_idx, "turn_number", turn_entry.get()))
-    else:
-        ctk.CTkLabel(parent_frame, text="This event triggers dynamically during gameplay.\nNo additional parameters needed.", font=("Arial", 13, "italic"), text_color="#b0b0b0").pack(anchor="w", pady=10)
+
+    if event_data["type"] in ["die", "last_breath"]:
+        row = ctk.CTkFrame(scroll_pane, fg_color="transparent")
+        row.pack(fill="x", pady=4, anchor="w")
+        ctk.CTkLabel(row, text="Filter Unit ID:", font=("Arial", 12, "bold"), width=100, anchor="w").pack(side="left")
+        filter_entry = ctk.CTkEntry(row, width=150)
+        filter_entry.insert(0, event_data.get("filter_id", ""))
+        filter_entry.pack(side="left")
+        filter_entry.bind("<KeyRelease>", lambda e: save_event_inputs(event_idx, "filter_id", filter_entry.get()))
+
+    if event_data["type"] == "prestart":
+        ctk.CTkLabel(scroll_pane, text="Scenario Objectives:", font=("Arial", 12, "bold")).pack(anchor="w", pady=(10, 5))
+        for o_idx, obj in enumerate(event_data.get("objectives", [])):
+            o_row = ctk.CTkFrame(scroll_pane, fg_color="transparent")
+            o_row.pack(fill="x", pady=3)
+            
+            desc_ent = ctk.CTkEntry(o_row, width=220)
+            desc_ent.insert(0, obj["description"])
+            desc_ent.pack(side="left", padx=(0, 5))
+            desc_ent.bind("<KeyRelease>", lambda e, oi=o_idx, de=desc_ent: event_data["objectives"][oi].update({"description": de.get()}))
+            
+            cond_menu = ctk.CTkOptionMenu(o_row, values=["win", "lose"], width=70)
+            cond_menu.set(obj["condition"])
+            cond_menu.pack(side="left", padx=(0, 5))
+            cond_menu.configure(command=lambda val, oi=o_idx: event_data["objectives"][oi].update({"condition": val}))
+            
+            ctk.CTkButton(o_row, text="🗑️", width=24, fg_color="transparent", text_color="#A83232", command=lambda oi=o_idx: delete_objective_row(event_idx, oi, container_frame)).pack(side="left")
+        ctk.CTkButton(scroll_pane, text="➕ Add Objective", width=120, fg_color="#2b2b2b", command=lambda: add_objective_row(event_idx, container_frame)).pack(anchor="w", pady=5)
+
+    ctk.CTkLabel(scroll_pane, text="Event Messages / Dialogue Stack:", font=("Arial", 12, "bold")).pack(anchor="w", pady=(15, 5))
+    for m_idx, msg in enumerate(event_data.get("messages", [])):
+        m_box = ctk.CTkFrame(scroll_pane, fg_color="#1a1a1a")
+        m_box.pack(fill="x", pady=4, padx=5)
+        
+        m_hdr = ctk.CTkFrame(m_box, fg_color="transparent")
+        m_hdr.pack(fill="x")
+        ctk.CTkLabel(m_hdr, text="Speaker ID:", font=("Arial", 11, "bold")).pack(side="left")
+        
+        spk_ent = ctk.CTkEntry(m_hdr, width=120, height=20, font=("Arial", 11))
+        spk_ent.insert(0, msg["speaker"])
+        spk_ent.pack(side="left", padx=5)
+        spk_ent.bind("<KeyRelease>", lambda e, mi=m_idx, se=spk_ent: event_data["messages"][mi].update({"speaker": se.get()}))
+        
+        ctk.CTkButton(m_hdr, text="🗑️ Message", width=60, height=18, fg_color="transparent", text_color="#A83232", command=lambda mi=m_idx: delete_message_row(event_idx, mi, container_frame)).pack(side="right")
+        
+        txt_box = ctk.CTkTextbox(m_box, width=420, height=45, font=("Arial", 11))
+        txt_box.insert("1.0", msg["message"])
+        txt_box.pack(fill="x", pady=(3, 0))
+        txt_box.bind("<KeyRelease>", lambda e, mi=m_idx, tb=txt_box: event_data["messages"][mi].update({"message": tb.get("1.0", "end-1c")}))
+        
+    ctk.CTkButton(scroll_pane, text="➕ Add Message Block", width=140, fg_color="#2b2b2b", command=lambda: add_message_row(event_idx, container_frame)).pack(anchor="w", pady=5)
 
 def render_events_sidebar(parent_frame):
     for widget in parent_frame.winfo_children():
@@ -113,7 +204,7 @@ def render_events_sidebar(parent_frame):
 
     active_idx = scen["active_event_index"]
     if active_idx is not None and active_idx < len(scen["events"]):
-        render_metadata_panel(right_editor, active_idx, scen["events"][active_idx])
+        render_metadata_panel(right_editor, active_idx, scen["events"][active_idx], parent_frame)
     else:
         placeholder = ctk.CTkLabel(right_editor, text="Select an event from the list\nor add a new one to configure metadata.", font=("Arial", 13, "italic"))
         placeholder.pack(expand=True)
