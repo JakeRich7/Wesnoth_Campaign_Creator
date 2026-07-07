@@ -1,6 +1,7 @@
 import re
 import shutil
 from pathlib import Path
+import app_state
 
 def format_wml(raw_text):
     formatted_lines = []
