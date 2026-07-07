@@ -102,6 +102,7 @@ def generate_campaign_files(campaign_name, scenarios_list):
         
     for i, s in enumerate(scenarios_list):
         scen_num = f"{i+1:02d}"
+        
         clean_title = re.sub(r'[^a-zA-Z0-9\s_]', '', s["title"])
         title_slug = clean_title.strip().replace(" ", "_")
         scen_id = f"{scen_num}_{title_slug}"
@@ -117,16 +118,22 @@ def generate_campaign_files(campaign_name, scenarios_list):
         
         for ev in s.get("events", []):
             if ev["type"] == "side":
+                recruits_string = ",".join(ev.get("recruit_list", []))
+                recruit_line = f'recruit="{recruits_string}"' if recruits_string else ""
+                
                 side_blocks += f"""
 [side]
     side={ev.get('side_number', '1')}
     controller={ev.get('controller', 'human')}
     team_name={ev.get('team_name', 'heroes')}
     user_team_name=_"{ev.get('team_name', 'heroes')}"
+    type="{ev.get('captain_type', 'Elvish Captain')}"
+    id="{ev.get('captain_id', 'hero_leader')}"
+    name=_"{ev.get('captain_name', 'Erlornas')}"
+    canrecruit=yes
+    {recruit_line}
     {{GOLD {ev.get('gold_easy', '200')} {ev.get('gold_normal', '150')} {ev.get('gold_hard', '100')}}}
     {{INCOME {ev.get('income_easy', '2')} {ev.get('income_normal', '1')} {ev.get('income_hard', '0')}}}
-    type="Elvish Captain"
-    canrecruit=yes
 [/side]"""
             else:
                 events_wml += compile_event_to_wml(ev) + "\n"
@@ -150,7 +157,26 @@ def generate_campaign_files(campaign_name, scenarios_list):
     canrecruit=yes
 [/side]"""
 
-        next_scen = f"{campaign_id}_{i+2:02d}" if (i + 1) < len(scenarios_list) else "null"
+        if (i + 1) < len(scenarios_list):
+            next_s = scenarios_list[i+1]
+            next_clean = re.sub(r'[^a-zA-Z0-9\s_]', '', next_s["title"])
+            next_slug = next_clean.strip().replace(" ", "_")
+            next_scen = f"{i+2:02d}_{next_slug}"
+        else:
+            next_scen = "null"
+            
+        story_wml = ""
+        if "story_parts" in s and s["story_parts"]:
+            story_wml += "[story]\n"
+            for part in s["story_parts"]:
+                story_wml += "    [part]\n"
+                if part.get("music"):
+                    story_wml += f"        music={part['music']}\n"
+                if part.get("background"):
+                    story_wml += f"        background={part['background']}\n"
+                story_wml += f"        story= _ \"{part.get('story', '')}\"\n"
+                story_wml += "    [/part]\n"
+            story_wml += "[/story]\n"
         
         scenario_cfg_raw = f"""
 [scenario]
@@ -160,6 +186,7 @@ def generate_campaign_files(campaign_name, scenarios_list):
     {{TURNS {s.get('turns_easy', '24')} {s.get('turns_normal', '22')} {s.get('turns_hard', '20')}}}
     next_scenario={next_scen}
     
+    {story_wml}
     {side_blocks}
     
     {events_wml}
@@ -169,3 +196,4 @@ def generate_campaign_files(campaign_name, scenarios_list):
             f.write(format_wml(scenario_cfg_raw))
             
     return export_root
+

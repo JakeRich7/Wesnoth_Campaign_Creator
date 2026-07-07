@@ -215,13 +215,30 @@ def import_campaign_folder(folder_path):
                     
             scen_events.extend(parse_events_from_wml(content))
             
+            story_parts = []
+            story_match = re.search(r'\[story\](.*?)\[/story\]', content, re.DOTALL)
+            if story_match:
+                part_blocks = re.findall(r'\[part\](.*?)\[/part\]', story_match.group(1), re.DOTALL)
+                for p_block in part_blocks:
+                    m_match = re.search(r'music\s*=\s*([^\s\n]+)', p_block)
+                    bg_match = re.search(r'background\s*=\s*([^\s\n]+)', p_block)
+                    st_match = re.search(r'story\s*=\s*(?:_\s*)?"([^"]+)"', p_block)
+                    if st_match:
+                        story_parts.append({
+                            "music": m_match.group(1) if m_match else "",
+                            "background": bg_match.group(1) if bg_match else "",
+                            "story":  st_match.group(1)
+                        })
+
             imported_scenarios.append({
                 "title": title,
                 "map_name": map_name,
                 "map_data": map_data,
                 "captains_count": captains_count,
                 "events": scen_events,
+                "story_parts": story_parts,
                 "active_event_index": None
+
             })
         except Exception:
             continue

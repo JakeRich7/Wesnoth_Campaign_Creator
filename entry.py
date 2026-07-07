@@ -31,6 +31,7 @@ def handle_add():
         "turns_easy": "24",
         "turns_normal": "22",
         "turns_hard": "20",
+        "story_parts": [],
         "events": []
     }
     app_state.state["scenarios"].append(blank_scenario)
@@ -337,6 +338,71 @@ def render_workspace():
         t_hard.insert(0, data.get("turns_hard", "20"))
         t_hard.pack(side="left", padx=2)
         t_hard.bind("<KeyRelease>", lambda e: data.update({"turns_hard": t_hard.get()}))
+
+        def open_story_editor():
+            win = ctk.CTkToplevel()
+            win.title(f"Story Prologue: {data['title']}")
+            win.geometry("500x500")
+            win.attributes("-topmost", True)
+            
+            sub_scroll = ctk.CTkScrollableFrame(win)
+            sub_scroll.pack(fill="both", expand=True, padx=10, pady=10)
+            
+            parts_list = data.get("story_parts", [])
+            
+            def handle_bg_browse(p_idx, bge_widget):
+                win.attributes("-topmost", False)
+                file_path = filedialog.askopenfilename(
+                    title="Select Story Background Image",
+                    filetypes=[("Image Files", "*.png;*.jpg;*.jpeg"), ("All Files", "*.*")]
+                )
+                win.attributes("-topmost", True)
+                if file_path:
+                    filename = Path(file_path).name
+                    parts_list[p_idx]["background"] = filename
+                    bge_widget.delete(0, "end")
+                    bge_widget.insert(0, filename)
+            
+            def render_parts():
+                for widget in sub_scroll.winfo_children():
+                    widget.destroy()
+                for p_idx, part in enumerate(parts_list):
+                    box = ctk.CTkFrame(sub_scroll, fg_color="#1a1a1a")
+                    box.pack(fill="x", pady=4, padx=5)
+                    
+                    hdr = ctk.CTkFrame(box, fg_color="transparent")
+                    hdr.pack(fill="x", pady=2)
+                    ctk.CTkLabel(hdr, text=f"Slide {p_idx+1}", font=("Arial", 11, "bold")).pack(side="left", padx=5)
+                    
+                    del_btn = ctk.CTkButton(hdr, text="🗑️", width=28, height=18, fg_color="transparent", text_color="#A83232", hover_color="#4a1a1a",
+                                             command=lambda idx=p_idx: [parts_list.pop(idx), render_parts()])
+                    del_btn.pack(side="right", padx=5)
+                    
+                    bg_row = ctk.CTkFrame(box, fg_color="transparent")
+                    bg_row.pack(fill="x", pady=2)
+                    ctk.CTkLabel(bg_row, text="Background asset:", font=("Arial", 11), width=110, anchor="w").pack(side="left", padx=5)
+                    
+                    bge = ctk.CTkEntry(bg_row, width=150, height=20, font=("Arial", 11))
+                    bge.insert(0, part.get("background", ""))
+                    bge.pack(side="left")
+                    bge.bind("<KeyRelease>", lambda e, idx=p_idx, widget=bge: parts_list[idx].update({"background": widget.get()}))
+                    
+                    bg_btn = ctk.CTkButton(bg_row, text="📂 Browse", width=70, height=20, font=("Arial", 11), 
+                                            command=lambda idx=p_idx, widget=bge: handle_bg_browse(idx, widget))
+                    bg_btn.pack(side="left", padx=5)
+                    
+                    ctk.CTkLabel(box, text="Narration Text:", font=("Arial", 11)).pack(anchor="w", padx=5, pady=(4, 2))
+                    tb = ctk.CTkTextbox(box, width=440, height=50, font=("Arial", 12))
+                    tb.insert("1.0", part.get("story", ""))
+                    tb.pack(fill="x", padx=5, pady=(0, 5))
+                    tb.bind("<KeyRelease>", lambda e, idx=p_idx, widget=tb: parts_list[idx].update({"story": widget.get("1.0", "end-1c")}))
+                    
+                ctk.CTkButton(sub_scroll, text="➕ Add Story Slide", width=140, fg_color="#2b2b2b", 
+                               command=lambda: [parts_list.append({"background": "story.jpg", "story": ""}), render_parts()]).pack(pady=10)
+                               
+            render_parts()
+
+        ctk.CTkButton(turns_row, text="📖 Manage Story Intro", width=130, height=24, fg_color="#2b2b2b", command=open_story_editor).pack(side="left", padx=15)
 
     events_container = ctk.CTkFrame(app_state.state["center_content_frame"], fg_color="transparent")
     events_container.pack(fill="both", expand=True, pady=(15, 0))
