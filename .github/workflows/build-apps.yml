@@ -1,0 +1,59 @@
+name: Build Desktop Apps
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+
+    - name: Install Dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install pyinstaller customtkinter
+
+    - name: Build Windows EXE
+      run: |
+        pyinstaller --noconsole --onefile --icon="wesnoth_plus.ico" --name="Wesnoth_Campaign_Creator" entry.py
+
+    - name: Upload Windows EXE
+      uses: actions/upload-artifact@v4
+      with:
+        name: Wesnoth_Campaign_Creator_Windows
+        path: dist/Wesnoth_Campaign_Creator.exe
+
+  build-macos:
+    runs-on: macos-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+
+    - name: Install Dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install pyinstaller customtkinter
+
+    - name: Build macOS App
+      run: |
+        pyinstaller --windowed --noconsole --icon="wesnoth_plus.ico" --name="Wesnoth_Campaign_Creator" entry.py
+
+    - name: Upload Mac App Bundle
+      uses: actions/upload-artifact@v4
+      with:
+        name: Wesnoth_Campaign_Creator_Mac
+        path: dist/Wesnoth_Campaign_Creator.app/
