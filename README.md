@@ -6,7 +6,17 @@
 
 ### I may continue to expand this, but we shall see. Feel free to copy any parts of it if you find this at all useful.
 
-### Requirements:
+### Requirements Python:
 1. Python 3.10+ must be installed
 2. Pip install customtkinter (run in terminal)
 3. python entry.py (runs the application)
+
+OR 
+
+1. Download and run 'Wesnoth_Campaign_Creator.exe'
+
+OR
+
+1. pip install pyinstaller
+2. pyinstaller --noconsole --onefile --icon="wesnoth_plus.ico" --name="Wesnoth_Campaign_Creator" entry.py
+3. run 'Wesnoth_Campaign_Creator.exe'
