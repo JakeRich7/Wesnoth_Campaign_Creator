@@ -4,6 +4,7 @@ import customtkinter as ctk
 import app_state
 import generator
 import importer
+import event_manager
 
 
 def save_active_inputs():
@@ -19,7 +20,8 @@ def handle_add():
         "title": f"Scenario {len(app_state.state['scenarios']) + 1}",
         "map_name": None,
         "map_data": "",
-        "captains_count": 0
+        "captains_count": 0,
+        "events": []
     }
     app_state.state["scenarios"].append(blank_scenario)
     app_state.state["current_index"] = len(app_state.state["scenarios"]) - 1
@@ -159,6 +161,7 @@ def refresh_sidebar():
         )
         nav_btn.pack(side="left", fill="x", expand=True)
 
+
 def render_workspace():
     for widget in app_state.state["center_content_frame"].winfo_children():
         widget.destroy()
@@ -201,6 +204,11 @@ def render_workspace():
         
     status_lbl = ctk.CTkLabel(map_row, text=status_string, text_color=status_color, font=status_font, anchor="w")
     status_lbl.pack(side="left", padx=15)
+
+    events_container = ctk.CTkFrame(app_state.state["center_content_frame"], fg_color="transparent")
+    events_container.pack(fill="both", expand=True, pady=(15, 0))
+    
+    event_manager.render_events_sidebar(events_container)
 
 
 def boot():

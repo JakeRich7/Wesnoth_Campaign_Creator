@@ -1,6 +1,7 @@
 import re
 import shutil
 from pathlib import Path
+from importlib import import_module
 
 
 def format_wml(raw_text):
@@ -99,6 +100,15 @@ def generate_campaign_files(campaign_name, scenarios_list):
         else:
             next_scen = "null"
         
+        events_wml = ""
+        if "events" in s:
+            for ev in s["events"]:
+                try:
+                    mod = import_module(f"events.{ev['type']}")
+                    events_wml += mod.generate_wml(ev) + "\n"
+                except Exception:
+                    continue
+
         scenario_cfg_raw = f"""
 [scenario]
     id={scen_id}
