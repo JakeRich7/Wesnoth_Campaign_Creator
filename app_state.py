@@ -3,7 +3,7 @@ state = {
     "campaign_description": "An epic adventure awaits...",
     "campaign_rank": "15",
     "campaign_icon": "units/elves-wood/lord.png",
-    "campaign_image": "campaign_image.png",
+    "campaign_image": "wesnoth-icon.png",
     "easy_img": "units/elves-wood/fighter.png",
     "normal_img": "units/elves-wood/lord.png",
     "hard_img": "units/elves-wood/high-lord.png",

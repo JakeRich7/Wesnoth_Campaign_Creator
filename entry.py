@@ -99,7 +99,7 @@ def handle_import():
                 app_state.state["campaign_description"] = "An epic adventure awaits..."
                 app_state.state["campaign_rank"] = "15"
                 app_state.state["campaign_icon"] = "units/elves-wood/lord.png"
-                app_state.state["campaign_image"] = "campaign_image.png"
+                app_state.state["campaign_image"] = "wesnoth-icon.png"
                 app_state.state["generate_pbl"] = True
                 app_state.state["pbl_type"] = "campaign"
                 app_state.state["pbl_version"] = "1.0.0"
@@ -135,7 +135,7 @@ def handle_import():
             app_state.state["campaign_description"] = "An epic adventure awaits..."
             app_state.state["campaign_rank"] = "15"
             app_state.state["campaign_icon"] = "units/elves-wood/lord.png"
-            app_state.state["campaign_image"] = "campaign_image.png"
+            app_state.state["campaign_image"] = "wesnoth-icon.png"
             app_state.state["generate_pbl"] = True
             app_state.state["pbl_type"] = "campaign"
             app_state.state["pbl_version"] = "1.0.0"
@@ -158,7 +158,7 @@ def handle_reset():
         app_state.state["campaign_description"] = "An epic adventure awaits..."
         app_state.state["campaign_rank"] = "15"
         app_state.state["campaign_icon"] = "units/elves-wood/lord.png"
-        app_state.state["campaign_image"] = "campaign_image.png"
+        app_state.state["campaign_image"] = "wesnoth-icon.png"
         
         app_state.state["generate_pbl"] = True
         app_state.state["pbl_type"] = "campaign"
