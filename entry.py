@@ -108,11 +108,13 @@ def handle_import():
 
 
 def handle_reset():
-    """Wipes all scenario data from memory and returns the application to a blank layout slate."""
     if messagebox.askyesno("Reset Project", "Are you sure you want to clear the current campaign? All unsaved work will be lost."):
         app_state.state["campaign_name"] = "My Epic Campaign"
         app_state.state["scenarios"] = []
         app_state.state["current_index"] = None
+        app_state.state["imported_campaign_path"] = ""
+        app_state.state["extra_addon_path"] = ""
+        app_state.state["discovered_units"] = []
         refresh_sidebar()
         render_workspace()
 
@@ -219,6 +221,40 @@ def render_campaign_settings_panel():
         
         up_btn = ctk.CTkButton(row, text="📂 Upload", width=70, command=lambda k=state_key, widget=ent: handle_img_upload(k, widget))
         up_btn.pack(side="left", padx=5)
+
+    dir_row = ctk.CTkFrame(canvas, fg_color="transparent")
+    dir_row.pack(fill="x", pady=4, anchor="w")
+    ctk.CTkLabel(dir_row, text="Wesnoth Path:", font=("Arial", 12, "bold"), width=130, anchor="w").pack(side="left")
+    dir_ent = ctk.CTkEntry(dir_row, width=300)
+    dir_ent.insert(0, app_state.state.get("wesnoth_directory", ""))
+    dir_ent.pack(side="left", padx=5)
+    
+    def browse_dir():
+        d = filedialog.askdirectory(title="Select Wesnoth Installation Folder")
+        if d:
+            app_state.state["wesnoth_directory"] = d
+            app_state.state["discovered_units"] = []
+            dir_ent.delete(0, "end")
+            dir_ent.insert(0, d)
+            
+    ctk.CTkButton(dir_row, text="📂 Browse", width=70, command=browse_dir).pack(side="left", padx=5)
+
+    extra_row = ctk.CTkFrame(canvas, fg_color="transparent")
+    extra_row.pack(fill="x", pady=4, anchor="w")
+    ctk.CTkLabel(extra_row, text="Units Add-on Root:", font=("Arial", 12, "bold"), width=130, anchor="w").pack(side="left")
+    extra_ent = ctk.CTkEntry(extra_row, width=300)
+    extra_ent.insert(0, app_state.state.get("extra_addon_path", ""))
+    extra_ent.pack(side="left", padx=5)
+    
+    def browse_extra():
+        d = filedialog.askdirectory(title="Select Optional Extra Unit Add-on Folder")
+        if d:
+            app_state.state["extra_addon_path"] = d
+            app_state.state["discovered_units"] = []
+            extra_ent.delete(0, "end")
+            extra_ent.insert(0, d)
+            
+    ctk.CTkButton(extra_row, text="📂 Browse", width=70, command=browse_extra).pack(side="left", padx=5)
         
     ctk.CTkLabel(canvas, text="Campaign Description:", font=("Arial", 12, "bold")).pack(anchor="w", pady=(15, 2))
     desc_box = ctk.CTkTextbox(canvas, width=500, height=80)

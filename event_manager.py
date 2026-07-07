@@ -1,5 +1,6 @@
 import customtkinter as ctk
 import app_state
+import importer
 
 EVENT_TYPES = ["side", "prestart", "start", "die", "last_breath", "turn", "victory"]
 
@@ -88,6 +89,7 @@ def delete_message_row(event_idx, msg_idx, container_frame):
     del app_state.state["scenarios"][idx]["events"][event_idx]["messages"][msg_idx]
     render_events_sidebar(container_frame)
 
+
 def render_metadata_panel(parent_frame, event_idx, event_data, container_frame):
     scroll_pane = ctk.CTkScrollableFrame(parent_frame, fg_color="transparent")
     scroll_pane.pack(fill="both", expand=True)
@@ -115,7 +117,7 @@ def render_metadata_panel(parent_frame, event_idx, event_data, container_frame):
     if event_data["type"] == "side":
         num_row = ctk.CTkFrame(scroll_pane, fg_color="transparent")
         num_row.pack(fill="x", pady=4, anchor="w")
-        ctk.CTkLabel(num_row, text="Side Number:", font=("Arial", 12, "bold"), width=100, anchor="w").pack(side="left")
+        ctk.CTkLabel(num_row, text="Side Number:", font=("Arial", 12, "bold"), width=150, anchor="w").pack(side="left")
         num_ent = ctk.CTkEntry(num_row, width=80)
         num_ent.insert(0, event_data.get("side_number", "1"))
         num_ent.pack(side="left")
@@ -123,7 +125,7 @@ def render_metadata_panel(parent_frame, event_idx, event_data, container_frame):
 
         ctrl_row = ctk.CTkFrame(scroll_pane, fg_color="transparent")
         ctrl_row.pack(fill="x", pady=4, anchor="w")
-        ctk.CTkLabel(ctrl_row, text="Controller:", font=("Arial", 12, "bold"), width=100, anchor="w").pack(side="left")
+        ctk.CTkLabel(ctrl_row, text="Controller:", font=("Arial", 12, "bold"), width=150, anchor="w").pack(side="left")
         ctrl_menu = ctk.CTkOptionMenu(ctrl_row, values=["human", "ai"], width=100)
         ctrl_menu.set(event_data.get("controller", "human"))
         ctrl_menu.pack(side="left")
@@ -131,7 +133,7 @@ def render_metadata_panel(parent_frame, event_idx, event_data, container_frame):
 
         team_row = ctk.CTkFrame(scroll_pane, fg_color="transparent")
         team_row.pack(fill="x", pady=4, anchor="w")
-        ctk.CTkLabel(team_row, text="Team Name:", font=("Arial", 12, "bold"), width=100, anchor="w").pack(side="left")
+        ctk.CTkLabel(team_row, text="Team Name:", font=("Arial", 12, "bold"), width=150, anchor="w").pack(side="left")
         team_ent = ctk.CTkEntry(team_row, width=150)
         team_ent.insert(0, event_data.get("team_name", "heroes"))
         team_ent.pack(side="left")
@@ -139,7 +141,7 @@ def render_metadata_panel(parent_frame, event_idx, event_data, container_frame):
 
         gold_row = ctk.CTkFrame(scroll_pane, fg_color="transparent")
         gold_row.pack(fill="x", pady=4, anchor="w")
-        ctk.CTkLabel(gold_row, text="Gold (Easy/Normal/Hard):", font=("Arial", 12, "bold"), width=150, anchor="w").pack(side="left")
+        ctk.CTkLabel(gold_row, text="Gold (Easy/Norm/Hard):", font=("Arial", 12, "bold"), width=150, anchor="w").pack(side="left")
         ge = ctk.CTkEntry(gold_row, width=60); ge.insert(0, event_data.get("gold_easy", "200")); ge.pack(side="left", padx=2)
         ge.bind("<KeyRelease>", lambda e: save_event_inputs(event_idx, "gold_easy", ge.get()))
         gn = ctk.CTkEntry(gold_row, width=60); gn.insert(0, event_data.get("gold_normal", "150")); gn.pack(side="left", padx=2)
@@ -149,13 +151,105 @@ def render_metadata_panel(parent_frame, event_idx, event_data, container_frame):
 
         inc_row = ctk.CTkFrame(scroll_pane, fg_color="transparent")
         inc_row.pack(fill="x", pady=4, anchor="w")
-        ctk.CTkLabel(inc_row, text="Income (Easy/Normal/Hard):", font=("Arial", 12, "bold"), width=150, anchor="w").pack(side="left")
+        ctk.CTkLabel(inc_row, text="Income (Easy/Norm/Hard):", font=("Arial", 12, "bold"), width=150, anchor="w").pack(side="left")
         ie = ctk.CTkEntry(inc_row, width=60); ie.insert(0, event_data.get("income_easy", "2")); ie.pack(side="left", padx=2)
         ie.bind("<KeyRelease>", lambda e: save_event_inputs(event_idx, "income_easy", ie.get()))
         in_ = ctk.CTkEntry(inc_row, width=60); in_.insert(0, event_data.get("income_normal", "1")); in_.pack(side="left", padx=2)
         in_.bind("<KeyRelease>", lambda e: save_event_inputs(event_idx, "income_normal", in_.get()))
         ih = ctk.CTkEntry(inc_row, width=60); ih.insert(0, event_data.get("income_hard", "0")); ih.pack(side="left", padx=2)
         ih.bind("<KeyRelease>", lambda e: save_event_inputs(event_idx, "income_hard", ih.get()))
+        
+        unit_roster = importer.discover_local_units()
+
+        type_row = ctk.CTkFrame(scroll_pane, fg_color="transparent")
+        type_row.pack(fill="x", pady=4, anchor="w")
+        ctk.CTkLabel(type_row, text="Captain Type:", font=("Arial", 12, "bold"), width=150, anchor="w").pack(side="left")
+        
+        type_display = ctk.CTkLabel(type_row, text=event_data.get("captain_type", "Elvish Captain"), font=("Arial", 12, "bold"), text_color="#1f6aa5")
+        
+        def open_captain_selector():
+            sel_win = ctk.CTkToplevel()
+            sel_win.title("Select Captain Unit Type")
+            sel_win.geometry("320x400")
+            sel_win.attributes("-topmost", True)
+            
+            sub_scroll = ctk.CTkScrollableFrame(sel_win)
+            sub_scroll.pack(fill="both", expand=True, padx=10, pady=10)
+            
+            def pick_unit(unit_name):
+                save_event_inputs(event_idx, "captain_type", unit_name)
+                type_display.configure(text=unit_name)
+                sel_win.destroy()
+                
+            for unit in unit_roster:
+                u_btn = ctk.CTkButton(sub_scroll, text=unit, fg_color="transparent", text_color="#b0b0b0", hover_color="#3b3b3b", anchor="w", height=24,
+                                      command=lambda u=unit: pick_unit(u))
+                u_btn.pack(fill="x", pady=1)
+                
+        ctk.CTkButton(type_row, text="⚙️ Select Type", width=110, height=22, command=open_captain_selector).pack(side="left", padx=(0, 10))
+        type_display.pack(side="left")
+
+        id_row = ctk.CTkFrame(scroll_pane, fg_color="transparent")
+        id_row.pack(fill="x", pady=4, anchor="w")
+        ctk.CTkLabel(id_row, text="Captain WML ID:", font=("Arial", 12, "bold"), width=150, anchor="w").pack(side="left")
+        id_ent = ctk.CTkEntry(id_row, width=150)
+        id_ent.insert(0, event_data.get("captain_id", "hero_leader"))
+        id_ent.pack(side="left")
+        id_ent.bind("<KeyRelease>", lambda e: save_event_inputs(event_idx, "captain_id", id_ent.get()))
+
+        name_row = ctk.CTkFrame(scroll_pane, fg_color="transparent")
+        name_row.pack(fill="x", pady=4, anchor="w")
+        ctk.CTkLabel(name_row, text="Display Name:", font=("Arial", 12, "bold"), width=150, anchor="w").pack(side="left")
+        name_ent = ctk.CTkEntry(name_row, width=150)
+        name_ent.insert(0, event_data.get("captain_name", "Erlornas"))
+        name_ent.pack(side="left")
+        name_ent.bind("<KeyRelease>", lambda e: save_event_inputs(event_idx, "captain_name", name_ent.get()))
+
+        rec_row = ctk.CTkFrame(scroll_pane, fg_color="transparent")
+        rec_row.pack(fill="x", pady=(8, 2), anchor="w")
+        ctk.CTkLabel(rec_row, text="Recruitment Options:", font=("Arial", 12, "bold"), width=150, anchor="w").pack(side="left")
+        
+        list_container = ctk.CTkFrame(scroll_pane, fg_color="transparent")
+        list_container.pack(fill="x", pady=(0, 8), padx=(150, 0), anchor="w")
+        
+        def refresh_recruit_labels():
+            for widget in list_container.winfo_children():
+                widget.destroy()
+            active_list = event_data.get("recruit_list", [])
+            if not active_list:
+                ctk.CTkLabel(list_container, text="None Selected", text_color="#b0b0b0", font=("Arial", 11, "italic")).pack(anchor="w")
+            for unit in active_list:
+                ctk.CTkLabel(list_container, text=f"• {unit}", font=("Arial", 11), height=14).pack(anchor="w", pady=0)
+
+        def open_recruit_selector():
+            selector_win = ctk.CTkToplevel()
+            selector_win.title("Select Recruit Options")
+            selector_win.geometry("350x450")
+            selector_win.attributes("-topmost", True)
+            
+            sub_scroll = ctk.CTkScrollableFrame(selector_win)
+            sub_scroll.pack(fill="both", expand=True, padx=10, pady=10)
+            
+            active_list = event_data.get("recruit_list", [])
+            
+            def toggle_unit(unit_name, var):
+                if var.get() == 1:
+                    if unit_name not in active_list: active_list.append(unit_name)
+                else:
+                    if unit_name in active_list: active_list.remove(unit_name)
+                event_data["recruit_list"] = active_list
+                refresh_recruit_labels()
+                
+            for unit in unit_roster:
+                u_row = ctk.CTkFrame(sub_scroll, fg_color="transparent")
+                u_row.pack(fill="x", pady=2)
+                chk_var = ctk.IntVar(value=1 if unit in active_list else 0)
+                chk = ctk.CTkCheckBox(u_row, text=unit, variable=chk_var, font=("Arial", 11))
+                chk.configure(command=lambda u=unit, v=chk_var: toggle_unit(u, v))
+                chk.pack(side="left", padx=5)
+                
+        ctk.CTkButton(rec_row, text="⚙️ Choose Units", width=110, height=22, command=open_recruit_selector).pack(side="left")
+        refresh_recruit_labels()
 
     if event_data["type"] == "prestart":
         ctk.CTkLabel(scroll_pane, text="Scenario Objectives:", font=("Arial", 12, "bold")).pack(anchor="w", pady=(10, 5))
@@ -199,6 +293,7 @@ def render_metadata_panel(parent_frame, event_idx, event_data, container_frame):
             txt_box.bind("<KeyRelease>", lambda e, mi=m_idx, tb=txt_box: event_data["messages"][mi].update({"message": tb.get("1.0", "end-1c")}))
             
         ctk.CTkButton(scroll_pane, text="➕ Add Message Block", width=140, fg_color="#2b2b2b", command=lambda: add_message_row(event_idx, container_frame)).pack(anchor="w", pady=5)
+
 
 def render_events_sidebar(parent_frame):
     for widget in parent_frame.winfo_children():

@@ -1,5 +1,6 @@
 import re
 from pathlib import Path
+import app_state
 
 def parse_captains_from_map(map_text):
     positions = set(re.findall(r'\b\d+\b', map_text))
@@ -62,6 +63,44 @@ def parse_events_from_wml(content):
         })
     return events
 
+def discover_local_units():
+    if app_state.state["discovered_units"]:
+        return app_state.state["discovered_units"]
+        
+    unit_ids = set()
+    base_dir = Path(app_state.state["wesnoth_directory"])
+    
+    unit_paths = [base_dir / "data" / "core" / "units"]
+    
+    if app_state.state["imported_campaign_path"]:
+        local_campaign = Path(app_state.state["imported_campaign_path"])
+        unit_paths.append(local_campaign / "units")
+        unit_paths.append(local_campaign / "Units")
+        
+    if app_state.state["extra_addon_path"]:
+        extra_addon = Path(app_state.state["extra_addon_path"])
+        unit_paths.append(extra_addon / "units")
+        unit_paths.append(extra_addon / "Units")
+    
+    for path in unit_paths:
+        if path.exists():
+            for cfg_file in path.glob("**/*.cfg"):
+                try:
+                    with open(cfg_file, "r", encoding="utf-8") as f:
+                        for line in f:
+                            cleaned = line.strip()
+                            if cleaned.startswith("id=") and not cleaned.startswith("#"):
+                                uid = cleaned.split("=")[1].strip().strip('"').strip("'")
+                                if not uid.startswith("$"):
+                                    unit_ids.add(uid)
+                                break
+                except Exception:
+                    continue
+                    
+    final_list = sorted(list(unit_ids)) if unit_ids else ["Orcish Archer", "Orcish Grunt", "Wolf Rider", "Elvish Captain", "Orcish Warrior"]
+    app_state.state["discovered_units"] = final_list
+    return final_list
+
 def import_campaign_folder(folder_path):
     root_path = Path(folder_path).absolute()
     scenarios_dir = None
@@ -118,11 +157,26 @@ def import_campaign_folder(folder_path):
             
             side_blocks = re.findall(r'\[side\](.*?)\[/side\]', content, re.DOTALL)
             for s_block in side_blocks:
-                side_m = re.search(r'side\s*=\s*(\d+)', s_block)
-                ctrl_m = re.search(r'controller\s*=\s*(\w+)', s_block)
-                team_m = re.search(r'team_name\s*=\s*(\w+)', s_block)
-                gold_m = re.search(r'gold\s*=\s*(\d+)', s_block)
-                inc_m = re.search(r'income\s*=\s*(\d+)', s_block)
+                side_m = re.search(r'\bside\s*=\s*(\d+)', s_block)
+                ctrl_m = re.search(r'\bcontroller\s*=\s*(\w+)', s_block)
+                team_m = re.search(r'\bteam_name\s*=\s*(\w+)', s_block)
+                
+                type_m = re.search(r'\btype\s*=\s*"([^"]+)"', s_block)
+                if not type_m: type_m = re.search(r'\btype\s*=\s*(.*?)(?=\s+\w+\s*=|$)', s_block)
+                
+                id_m = re.search(r'\bid\s*=\s*"([^"]+)"', s_block)
+                if not id_m: id_m = re.search(r'\bid\s*=\s*([a-zA-Z0-9_]+)', s_block)
+                
+                name_m = re.search(r'\bname\s*=\s*(?:_\s*)?"([^"]+)"', s_block)
+                if not name_m: name_m = re.search(r'\bname\s*=\s*(?:_\s*)?([a-zA-Z0-9_]+)', s_block)
+                
+                rec_m = re.search(r'\brecruit\s*=\s*"([^"]+)"', s_block)
+                if not rec_m: rec_m = re.search(r'\brecruit\s*=\s*([a-zA-Z0-9_\s,]+)', s_block)
+                
+                gold_m = re.search(r'GOLD\s+(\d+)\s+(\d+)\s+(\d+)', s_block, re.IGNORECASE)
+                inc_m = re.search(r'INCOME\s+(\d+)\s+(\d+)\s+(\d+)', s_block, re.IGNORECASE)
+                
+                rec_list = [r.strip() for r in rec_m.group(1).split(",")] if rec_m else []
                 
                 if side_m:
                     scen_events.append({
@@ -130,12 +184,17 @@ def import_campaign_folder(folder_path):
                         "side_number": side_m.group(1),
                         "controller": ctrl_m.group(1) if ctrl_m else "human",
                         "team_name": team_m.group(1) if team_m else "heroes",
-                        "gold": gold_m.group(1) if gold_m else "100",
-                        "income": inc_m.group(1) if inc_m else "0",
-                        "turn_number": "",
-                        "filter_id": "",
-                        "objectives": [],
-                        "messages": []
+                        "captain_type": type_m.group(1).strip() if type_m else "Elvish Captain",
+                        "captain_id": id_m.group(1).strip() if id_m else "hero_leader",
+                        "captain_name": name_m.group(1).strip() if name_m else "Erlornas",
+                        "recruit_list": rec_list,
+                        "gold_easy": gold_m.group(1) if gold_m else "200",
+                        "gold_normal": gold_m.group(2) if gold_m else "150",
+                        "gold_hard": gold_m.group(3) if gold_m else "100",
+                        "income_easy": inc_m.group(1) if inc_m else "2",
+                        "income_normal": inc_m.group(2) if inc_m else "1",
+                        "income_hard": inc_m.group(3) if inc_m else "0",
+                        "turn_number": "", "filter_id": "", "objectives": [], "messages": []
                     })
                     
             scen_events.extend(parse_events_from_wml(content))
