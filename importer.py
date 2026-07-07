@@ -149,6 +149,40 @@ def import_campaign_folder(folder_path):
         scenarios_dir = root_path / "scenarios"
     if not maps_dir:
         maps_dir = root_path / "maps"
+
+    pbl_file = root_path / "_server.pbl"
+    if pbl_file.exists():
+        try:
+            with open(pbl_file, "r", encoding="utf-8") as pf:
+                pbl_content = pf.read()
+            app_state.state["generate_pbl"] = True
+            
+            type_match = re.search(r'type\s*=\s*"([^"]+)"', pbl_content)
+            ver_match = re.search(r'version\s*=\s*"([^"]+)"', pbl_content)
+            auth_match = re.search(r'author\s*=\s*"([^"]+)"', pbl_content)
+            email_match = re.search(r'email\s*=\s*"([^"]+)"', pbl_content)
+            pass_match = re.search(r'passphrase\s*=\s*"([^"]+)"', pbl_content)
+            
+            if type_match: app_state.state["pbl_type"] = type_match.group(1)
+            if ver_match: app_state.state["pbl_version"] = ver_match.group(1)
+            if auth_match: app_state.state["pbl_author"] = auth_match.group(1)
+            if email_match: app_state.state["pbl_email"] = email_match.group(1)
+            if pass_match: app_state.state["pbl_passphrase"] = pass_match.group(1)
+        except Exception:
+            pass
+    else:
+        app_state.state["generate_pbl"] = False
+
+    main_cfg = root_path / "_main.cfg"
+    if main_cfg.exists():
+        try:
+            with open(main_cfg, "r", encoding="utf-8") as mf:
+                main_content = mf.read()
+            img_match = re.search(r'\bimage\s*=\s*"([^"]+)"', main_content)
+            if img_match:
+                app_state.state["campaign_image"] = img_match.group(1)
+        except Exception:
+            pass
     
     imported_scenarios = []
     if not scenarios_dir.exists():

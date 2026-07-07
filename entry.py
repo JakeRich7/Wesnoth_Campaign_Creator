@@ -83,7 +83,6 @@ def handle_upload():
         except Exception as e:
             messagebox.showerror("Error", f"Failed to ingest map file:\n{str(e)}")
 
-
 def handle_import():
     save_active_inputs()
     selected_dir = filedialog.askdirectory(title="Select Wesnoth Campaign Add-on Folder")
@@ -91,36 +90,91 @@ def handle_import():
     if selected_dir:
         app_state.state["imported_campaign_path"] = selected_dir
         app_state.state["discovered_units"] = []
-        scenarios = importer.import_campaign_folder(selected_dir)
-        if not scenarios:
-            messagebox.showwarning("Import Failed", "No valid .cfg scenario files were found inside this folder.")
-            return
-            
-        clean_name = Path(selected_dir).name.replace("wesnoth_addon_", "").replace("_", " ").title()
-        app_state.state["campaign_name"] = clean_name
-        app_state.state["scenarios"] = scenarios
-        app_state.state["current_index"] = 0
         
-        if hasattr(app_state, "campaign_name_input") and app_state.campaign_name_input:
-            app_state.campaign_name_input.delete(0, "end")
-            app_state.campaign_name_input.insert(0, clean_name)
+        try:
+            scenarios = importer.import_campaign_folder(selected_dir)
             
-        refresh_sidebar()
-        render_workspace()
-        messagebox.showinfo("Import Success", f"Successfully imported {len(scenarios)} scenarios!")
-
+            if not scenarios:
+                app_state.state["campaign_name"] = "My Epic Campaign"
+                app_state.state["campaign_description"] = "An epic adventure awaits..."
+                app_state.state["campaign_rank"] = "15"
+                app_state.state["campaign_icon"] = "units/elves-wood/lord.png"
+                app_state.state["campaign_image"] = "campaign_image.png"
+                app_state.state["generate_pbl"] = True
+                app_state.state["pbl_type"] = "campaign"
+                app_state.state["pbl_version"] = "1.0.0"
+                app_state.state["pbl_author"] = ""
+                app_state.state["pbl_email"] = ""
+                app_state.state["pbl_passphrase"] = ""
+                app_state.state["scenarios"] = []
+                app_state.state["current_index"] = None
+                app_state.state["imported_campaign_path"] = ""
+                app_state.state["extra_addon_path"] = ""
+                app_state.state["discovered_units"] = []
+                
+                refresh_sidebar()
+                render_workspace()
+                messagebox.showwarning("Import Failed", "No valid .cfg scenario files were found inside this folder. Workspace reset to default.")
+                return
+                
+            clean_name = Path(selected_dir).name.replace("wesnoth_addon_", "").replace("_", " ").title()
+            app_state.state["campaign_name"] = clean_name
+            app_state.state["scenarios"] = scenarios
+            app_state.state["current_index"] = 0
+            
+            if hasattr(app_state, "campaign_name_input") and app_state.campaign_name_input:
+                app_state.campaign_name_input.delete(0, "end")
+                app_state.campaign_name_input.insert(0, clean_name)
+                
+            refresh_sidebar()
+            render_workspace()
+            messagebox.showinfo("Import Success", f"Successfully imported {len(scenarios)} scenarios!")
+            
+        except Exception as e:
+            app_state.state["campaign_name"] = "My Epic Campaign"
+            app_state.state["campaign_description"] = "An epic adventure awaits..."
+            app_state.state["campaign_rank"] = "15"
+            app_state.state["campaign_icon"] = "units/elves-wood/lord.png"
+            app_state.state["campaign_image"] = "campaign_image.png"
+            app_state.state["generate_pbl"] = True
+            app_state.state["pbl_type"] = "campaign"
+            app_state.state["pbl_version"] = "1.0.0"
+            app_state.state["pbl_author"] = ""
+            app_state.state["pbl_email"] = ""
+            app_state.state["pbl_passphrase"] = ""
+            app_state.state["scenarios"] = []
+            app_state.state["current_index"] = None
+            app_state.state["imported_campaign_path"] = ""
+            app_state.state["extra_addon_path"] = ""
+            app_state.state["discovered_units"] = []
+            
+            refresh_sidebar()
+            render_workspace()
+            messagebox.showerror("Import Error", f"A critical error occurred while importing:\n{str(e)}\n\nWorkspace reset to default.")
 
 def handle_reset():
     if messagebox.askyesno("Reset Project", "Are you sure you want to clear the current campaign? All unsaved work will be lost."):
         app_state.state["campaign_name"] = "My Epic Campaign"
+        app_state.state["campaign_description"] = "An epic adventure awaits..."
+        app_state.state["campaign_rank"] = "15"
+        app_state.state["campaign_icon"] = "units/elves-wood/lord.png"
+        app_state.state["campaign_image"] = "campaign_image.png"
+        
+        app_state.state["generate_pbl"] = True
+        app_state.state["pbl_type"] = "campaign"
+        app_state.state["pbl_version"] = "1.0.0"
+        app_state.state["pbl_author"] = ""
+        app_state.state["pbl_email"] = ""
+        app_state.state["pbl_passphrase"] = ""
+        
         app_state.state["scenarios"] = []
         app_state.state["current_index"] = None
         app_state.state["imported_campaign_path"] = ""
         app_state.state["extra_addon_path"] = ""
         app_state.state["discovered_units"] = []
+        
         refresh_sidebar()
         render_workspace()
-
 
 def handle_export():
     save_active_inputs()
@@ -142,6 +196,18 @@ def handle_export():
         messagebox.showerror("Validation Error", error_msg)
         return
         
+    if app_state.state.get("generate_pbl", True):
+        pbl_errors = []
+        if not app_state.state.get("pbl_author", "").strip(): pbl_errors.append("• Author Name is required.")
+        if not app_state.state.get("pbl_email", "").strip(): pbl_errors.append("• Public Email is required.")
+        if not app_state.state.get("pbl_passphrase", "").strip(): pbl_errors.append("• Server Passphrase is required.")
+        if not app_state.state.get("pbl_version", "").strip(): pbl_errors.append("• Version string is required.")
+        
+        if pbl_errors:
+            error_msg = "PBL Generation Error:\n\n" + "\n".join(pbl_errors) + "\n\nFill these fields out in 'Global Campaign Configs' or uncheck the PBL file option."
+            messagebox.showerror("Validation Error", error_msg)
+            return
+
     try:
         dest = generator.generate_campaign_files(
             app_state.state["campaign_name"], 
@@ -177,7 +243,6 @@ def refresh_sidebar():
         )
         nav_btn.pack(side="left", fill="x", expand=True)
 
-
 def handle_img_upload(key, entry_widget):
     file_path = filedialog.askopenfilename(
         title="Select Image File",
@@ -185,10 +250,18 @@ def handle_img_upload(key, entry_widget):
     )
     if file_path:
         filename = Path(file_path).name
-        app_state.state[key] = f"units/{filename}"
+        campaign_id = app_state.state["campaign_name"].strip().replace(" ", "_")
+        
+        if key == "campaign_image":
+            formatted_path = f"data/add-ons/{campaign_id}/images/{filename}"
+        elif key in ["campaign_icon", "easy_img", "normal_img", "hard_img"]:
+            formatted_path = f"units/{filename}"
+        else:
+            formatted_path = filename
+            
+        app_state.state[key] = formatted_path
         entry_widget.delete(0, "end")
-        entry_widget.insert(0, app_state.state[key])
-
+        entry_widget.insert(0, formatted_path)
 
 def render_campaign_settings_panel():
     for widget in app_state.state["center_content_frame"].winfo_children():
@@ -286,7 +359,122 @@ def render_campaign_settings_panel():
         
         up_btn = ctk.CTkButton(row, text="📂 Upload", width=70, command=lambda k=img_key, widget=img_ent: handle_img_upload(k, widget))
         up_btn.pack(side="left", padx=5, pady=8)
+        
+        pbl_toggle_row = ctk.CTkFrame(canvas, fg_color="transparent")
+    pbl_toggle_row.pack(fill="x", pady=(15, 5), anchor="w")
+    
+    pbl_var = ctk.IntVar(value=1 if app_state.state.get("generate_pbl", True) else 0)
+    pbl_panel_frame = ctk.CTkFrame(canvas, fg_color="#222222")
+    
+    def render_pbl_fields():
+        for widget in pbl_panel_frame.winfo_children():
+            widget.destroy()
+            
+        ctk.CTkLabel(pbl_panel_frame, text="Server Upload Parameters:", font=("Arial", 12, "bold")).pack(anchor="w", padx=10, pady=(8, 4))
+        
+        pbl_fields = [
+            ("Version:", "pbl_version"),
+            ("Author Name:", "pbl_author"),
+            ("Public Email:", "pbl_email"),
+            ("Server Passphrase:", "pbl_passphrase")
+        ]
+        
+        for label_text, state_key in pbl_fields:
+            row = ctk.CTkFrame(pbl_panel_frame, fg_color="transparent")
+            row.pack(fill="x", pady=3, anchor="w")
+            ctk.CTkLabel(row, text=label_text, font=("Arial", 11, "bold"), width=140, anchor="w").pack(side="left", padx=10)
+            
+            ent = ctk.CTkEntry(row, width=220, height=22, font=("Arial", 11))
+            ent.insert(0, app_state.state.get(state_key, ""))
+            ent.pack(side="left")
+            ent.bind("<KeyRelease>", lambda e, k=state_key, w=ent: app_state.state.update({k: w.get()}))
+            
+        icon_row = ctk.CTkFrame(pbl_panel_frame, fg_color="transparent")
+        icon_row.pack(fill="x", pady=3, anchor="w")
+        ctk.CTkLabel(icon_row, text="PBL Upload Icon:", font=("Arial", 11, "bold"), width=140, anchor="w").pack(side="left", padx=10)
+        
+        icon_ent = ctk.CTkEntry(icon_row, width=220, height=22, font=("Arial", 11))
+        icon_ent.insert(0, app_state.state.get("campaign_icon", "units/elves-wood/lord.png"))
+        icon_ent.pack(side="left")
+        icon_ent.bind("<KeyRelease>", lambda e: app_state.state.update({"campaign_icon": icon_ent.get()}))
+        
+        def browse_pbl_icon():
+            canvas.master.master.attributes("-topmost", False)
+            file_path = filedialog.askopenfilename(
+                title="Select Server Publication Icon Image",
+                filetypes=[("Image Files", "*.png;*.jpg;*.jpeg"), ("All Files", "*.*")]
+            )
+            canvas.master.master.attributes("-topmost", True)
+            if file_path:
+                filename = Path(file_path).name
+                formatted_path = f"units/{filename}"
+                app_state.state["campaign_icon"] = formatted_path
+                icon_ent.delete(0, "end")
+                icon_ent.insert(0, formatted_path)
+                
+        ctk.CTkButton(icon_row, text="📂 Browse", width=70, height=20, font=("Arial", 11), command=browse_pbl_icon).pack(side="left", padx=5)
 
+    def toggle_pbl_view():
+        is_checked = (pbl_var.get() == 1)
+        app_state.state["generate_pbl"] = is_checked
+        if is_checked:
+            pbl_panel_frame.pack(fill="x", pady=5, padx=5)
+            render_pbl_fields()
+        else:
+            pbl_panel_frame.pack_forget()
+            
+    pbl_chk = ctk.CTkCheckBox(pbl_toggle_row, text="Create Add-on Server Publication File (_server.pbl)", variable=pbl_var, font=("Arial", 12, "bold"), command=toggle_pbl_view)
+    pbl_chk.pack(side="left", padx=5)
+    
+    toggle_pbl_view()
+
+    def render_pbl_fields():
+        for widget in pbl_panel_frame.winfo_children():
+            widget.destroy()
+            
+        ctk.CTkLabel(pbl_panel_frame, text="Server Upload Parameters:", font=("Arial", 12, "bold")).pack(anchor="w", padx=10, pady=(8, 4))
+        
+        pbl_fields = [
+            ("Version:", "pbl_version"),
+            ("Author Name:", "pbl_author"),
+            ("Public Email:", "pbl_email"),
+            ("Server Passphrase:", "pbl_passphrase")
+        ]
+        
+        for label_text, state_key in pbl_fields:
+            row = ctk.CTkFrame(pbl_panel_frame, fg_color="transparent")
+            row.pack(fill="x", pady=3, anchor="w")
+            ctk.CTkLabel(row, text=label_text, font=("Arial", 11, "bold"), width=140, anchor="w").pack(side="left", padx=10)
+            
+            ent = ctk.CTkEntry(row, width=220, height=22, font=("Arial", 11))
+            ent.insert(0, app_state.state.get(state_key, ""))
+            ent.pack(side="left")
+            ent.bind("<KeyRelease>", lambda e, k=state_key, w=ent: app_state.state.update({k: w.get()}))
+            
+        icon_row = ctk.CTkFrame(pbl_panel_frame, fg_color="transparent")
+        icon_row.pack(fill="x", pady=3, anchor="w")
+        ctk.CTkLabel(icon_row, text="PBL Upload Icon:", font=("Arial", 11, "bold"), width=140, anchor="w").pack(side="left", padx=10)
+        
+        icon_ent = ctk.CTkEntry(icon_row, width=220, height=22, font=("Arial", 11))
+        icon_ent.insert(0, app_state.state.get("campaign_icon", "units/elves-wood/lord.png"))
+        icon_ent.pack(side="left")
+        icon_ent.bind("<KeyRelease>", lambda e: app_state.state.update({"campaign_icon": icon_ent.get()}))
+        
+        def browse_pbl_icon():
+            canvas.master.master.attributes("-topmost", False)
+            file_path = filedialog.askopenfilename(
+                title="Select Server Publication Icon Image",
+                filetypes=[("Image Files", "*.png;*.jpg;*.jpeg"), ("All Files", "*.*")]
+            )
+            canvas.master.master.attributes("-topmost", True)
+            if file_path:
+                filename = Path(file_path).name
+                formatted_path = f"units/{filename}"
+                app_state.state["campaign_icon"] = formatted_path
+                icon_ent.delete(0, "end")
+                icon_ent.insert(0, formatted_path)
+                
+        ctk.CTkButton(icon_row, text="📂 Browse", width=70, height=20, font=("Arial", 11), command=browse_pbl_icon).pack(side="left", padx=5)
 
 def render_workspace():
     for widget in app_state.state["center_content_frame"].winfo_children():

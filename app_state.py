@@ -3,7 +3,7 @@ state = {
     "campaign_description": "An epic adventure awaits...",
     "campaign_rank": "15",
     "campaign_icon": "units/elves-wood/lord.png",
-    "campaign_image": "data/add-ons/An_Orcish_Incursion/images/campaign_image.png",
+    "campaign_image": "campaign_image.png",
     "easy_img": "units/elves-wood/fighter.png",
     "normal_img": "units/elves-wood/lord.png",
     "hard_img": "units/elves-wood/high-lord.png",
@@ -19,5 +19,11 @@ state = {
     "view_mode": "scenario",   
     "scenario_list_frame": None,
     "center_content_frame": None,
-    "scenario_title_input": None
+    "scenario_title_input": None,
+    "generate_pbl": True,
+    "pbl_type": "campaign",
+    "pbl_version": "1.0.0",
+    "pbl_author": "",
+    "pbl_email": "",
+    "pbl_passphrase": ""
 }

@@ -195,5 +195,18 @@ def generate_campaign_files(campaign_name, scenarios_list):
         with open(scenarios_dir / f"{scen_id}.cfg", "w", encoding="utf-8") as f:
             f.write(format_wml(scenario_cfg_raw))
             
+    if app_state.state.get("generate_pbl", True):
+        pbl_raw = f"""title="{campaign_name}"
+type="campaign"
+icon="{app_state.state.get('campaign_icon', '')}"
+version="{app_state.state.get('pbl_version', '1.0.0')}"
+author="{app_state.state.get('pbl_author', '')}"
+email="{app_state.state.get('pbl_email', '')}"
+description="{app_state.state.get('campaign_description', '')}"
+passphrase="{app_state.state.get('pbl_passphrase', '')}"
+"""
+        with open(export_root / "_server.pbl", "w", encoding="utf-8") as f:
+            f.write(pbl_raw)
+
     return export_root
 
