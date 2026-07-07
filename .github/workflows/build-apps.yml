@@ -50,7 +50,7 @@ jobs:
 
     - name: Build macOS App
       run: |
-        pyinstaller --windowed --noconsole --icon="wesnoth_plus.ico" --name="Wesnoth_Campaign_Creator" entry.py
+        pyinstaller --windowed --noconsole --name="Wesnoth_Campaign_Creator" entry.py
 
     - name: Upload Mac App Bundle
       uses: actions/upload-artifact@v4
