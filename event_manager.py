@@ -272,24 +272,36 @@ def render_metadata_panel(parent_frame, event_idx, event_data, container_frame):
 
     if event_data["type"] != "side":
         ctk.CTkLabel(scroll_pane, text="Event Messages / Dialogue Stack:", font=("Arial", 12, "bold")).pack(anchor="w", pady=(15, 5))
+        available_speakers = get_available_speakers()
+        
         for m_idx, msg in enumerate(event_data.get("messages", [])):
             m_box = ctk.CTkFrame(scroll_pane, fg_color="#1a1a1a")
             m_box.pack(fill="x", pady=4, padx=5)
             
             m_hdr = ctk.CTkFrame(m_box, fg_color="transparent")
-            m_hdr.pack(fill="x")
-            ctk.CTkLabel(m_hdr, text="Speaker ID:", font=("Arial", 11, "bold")).pack(side="left")
+            m_hdr.pack(fill="x", pady=(2, 2))
+            ctk.CTkLabel(m_hdr, text="Speaker ID:", font=("Arial", 11, "bold")).pack(side="left", padx=(5, 5))
             
             spk_ent = ctk.CTkEntry(m_hdr, width=120, height=20, font=("Arial", 11))
             spk_ent.insert(0, msg["speaker"])
-            spk_ent.pack(side="left", padx=5)
+            spk_ent.pack(side="left")
             spk_ent.bind("<KeyRelease>", lambda e, mi=m_idx, se=spk_ent: event_data["messages"][mi].update({"speaker": se.get()}))
             
-            ctk.CTkButton(m_hdr, text="🗑️ Message", width=60, height=18, fg_color="transparent", text_color="#A83232", command=lambda mi=m_idx: delete_message_row(event_idx, mi, container_frame)).pack(side="right")
+            def apply_speaker_select(val, target_entry=spk_ent, mi=m_idx):
+                target_entry.delete(0, "end")
+                target_entry.insert(0, val)
+                event_data["messages"][mi].update({"speaker": val})
+                
+            spk_menu = ctk.CTkOptionMenu(m_hdr, values=available_speakers, width=110, height=20, font=("Arial", 10))
+            spk_menu.set(msg["speaker"] if msg["speaker"] in available_speakers else "")
+            spk_menu.pack(side="left", padx=5)
+            spk_menu.configure(command=lambda val, target=spk_ent, mi=m_idx: apply_speaker_select(val, target, mi))
             
-            txt_box = ctk.CTkTextbox(m_box, width=420, height=45, font=("Arial", 11))
+            ctk.CTkButton(m_hdr, text="🗑️ Message", width=60, height=18, fg_color="transparent", text_color="#A83232", command=lambda mi=m_idx: delete_message_row(event_idx, mi, container_frame)).pack(side="right", padx=(0, 5))
+            
+            txt_box = ctk.CTkTextbox(m_box, width=420, height=48, font=("Arial", 13))
             txt_box.insert("1.0", msg["message"])
-            txt_box.pack(fill="x", pady=(3, 0))
+            txt_box.pack(fill="x", pady=(3, 5), padx=5)
             txt_box.bind("<KeyRelease>", lambda e, mi=m_idx, tb=txt_box: event_data["messages"][mi].update({"message": tb.get("1.0", "end-1c")}))
             
         ctk.CTkButton(scroll_pane, text="➕ Add Message Block", width=140, fg_color="#2b2b2b", command=lambda: add_message_row(event_idx, container_frame)).pack(anchor="w", pady=5)
@@ -355,3 +367,19 @@ def render_events_sidebar(parent_frame):
     else:
         placeholder = ctk.CTkLabel(right_editor, text="Select an event from the list\nor add a new one to configure metadata.", font=("Arial", 13, "italic"))
         placeholder.pack(expand=True)
+
+def get_available_speakers():
+    speakers = ["narrator"]
+    idx = app_state.state["current_index"]
+    if idx is not None:
+        scen = app_state.state["scenarios"][idx]
+        for ev in scen.get("events", []):
+            if ev["type"] == "side" and ev.get("captain_id"):
+                c_id = ev["captain_id"].strip()
+                if c_id and c_id not in speakers:
+                    speakers.append(c_id)
+            elif ev["type"] in ["die", "last_breath"] and ev.get("filter_id"):
+                f_id = ev["filter_id"].strip()
+                if f_id and f_id not in speakers:
+                    speakers.append(f_id)
+    return speakers
