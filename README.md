@@ -9,7 +9,7 @@
 ### Requirements Python:
 1. Python 3.10+ must be installed
 2. Pip install customtkinter (run in terminal)
-3. python entry.py (runs the application)
+3. python entry.py (run in terminal)
 
 OR 
 
