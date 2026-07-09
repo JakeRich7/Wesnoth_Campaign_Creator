@@ -29,7 +29,7 @@ def parse_captains_from_map(map_text):
     valid_teams = [int(p) for p in positions if int(p) > 0]
     return len(valid_teams) if valid_teams else 0
 
-def compile_event_to_wml(ev):
+def compile_event_to_wml(ev, is_last_scenario=False):
     ev_type = ev["type"]
     wml = ""
     
@@ -42,10 +42,13 @@ def compile_event_to_wml(ev):
         wml += f"[filter]\nid={ev['filter_id']}\n[/filter]\n"
         
     if ev_type == "prestart":
-        wml += "[objectives]\n"
+        wml += "[objectives]\nside=1\n"
         for obj in ev.get("objectives", []):
             wml += f"[objective]\ndescription= _ \"{obj['description']}\"\ncondition={obj['condition']}\n[/objective]\n"
-        wml += "{TURNS_RUN_OUT}\n[gold_carryover]\nbonus=yes\ncarryover_percentage=40\n[/gold_carryover]\n[/objectives]\n"
+        wml += "{TURNS_RUN_OUT}\n"
+        if is_last_scenario:
+            wml += "{IS_LAST_SCENARIO}\n"
+        wml += "[gold_carryover]\nbonus=yes\ncarryover_percentage=40\n[/gold_carryover]\n[/objectives]\n"
         
     for msg in ev.get("messages", []):
         if msg.get("speaker") or msg.get("message"):
@@ -59,7 +62,8 @@ def compile_event_to_wml(ev):
 
 def generate_campaign_files(campaign_name, scenarios_list):
     campaign_id = campaign_name.strip().replace(" ", "_")
-    export_root = Path.home() / "Desktop" / campaign_id
+    base_export_path = Path(app_state.state.get("export_directory", str(Path.home() / "Desktop")))
+    export_root = base_export_path / campaign_id
     
     if export_root.exists():
         shutil.rmtree(export_root)
@@ -102,6 +106,7 @@ def generate_campaign_files(campaign_name, scenarios_list):
         
     for i, s in enumerate(scenarios_list):
         scen_num = f"{i+1:02d}"
+        is_last = (i == len(scenarios_list) - 1)
         
         clean_title = re.sub(r'[^a-zA-Z0-9\s_]', '', s["title"])
         title_slug = clean_title.strip().replace(" ", "_")
@@ -136,7 +141,7 @@ def generate_campaign_files(campaign_name, scenarios_list):
     {{INCOME {ev.get('income_easy', '2')} {ev.get('income_normal', '1')} {ev.get('income_hard', '0')}}}
 [/side]"""
             else:
-                events_wml += compile_event_to_wml(ev) + "\n"
+                events_wml += compile_event_to_wml(ev, is_last_scenario=is_last) + "\n"
 
         if not side_blocks:
             side_blocks = """
@@ -157,21 +162,13 @@ def generate_campaign_files(campaign_name, scenarios_list):
     canrecruit=yes
 [/side]"""
 
-        if (i + 1) < len(scenarios_list):
-            next_s = scenarios_list[i+1]
-            next_clean = re.sub(r'[^a-zA-Z0-9\s_]', '', next_s["title"])
-            next_slug = next_clean.strip().replace(" ", "_")
-            next_scen = f"{i+2:02d}_{next_slug}"
-        else:
-            next_scen = "null"
-            
+        next_scen = f"{i+2:02d}_" + re.sub(r'[^a-zA-Z0-9\s_]', '', scenarios_list[i+1]["title"]).strip().replace(" ", "_") if (i + 1) < len(scenarios_list) else "null"
+        
         story_wml = ""
         if "story_parts" in s and s["story_parts"]:
             story_wml += "[story]\n"
             for part in s["story_parts"]:
                 story_wml += "    [part]\n"
-                if part.get("music"):
-                    story_wml += f"        music={part['music']}\n"
                 if part.get("background"):
                     story_wml += f"        background={part['background']}\n"
                 story_wml += f"        story= _ \"{part.get('story', '')}\"\n"
@@ -207,6 +204,7 @@ passphrase="{app_state.state.get('pbl_passphrase', '')}"
 """
         with open(export_root / "_server.pbl", "w", encoding="utf-8") as f:
             f.write(pbl_raw)
-
+            
     return export_root
+
 

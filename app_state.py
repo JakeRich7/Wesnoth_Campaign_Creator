@@ -1,3 +1,5 @@
+from pathlib import Path
+
 state = {
     "campaign_name": "My Epic Campaign",
     "campaign_description": "An epic adventure awaits...",
@@ -12,6 +14,7 @@ state = {
     "hard_label": "Challenging",
     "wesnoth_directory": "C:/Program Files/Battle for Wesnoth 1.18.3",
     "imported_campaign_path": "",
+    "export_directory": str(Path.home() / "Desktop"),
     "extra_addon_path": "",
     "discovered_units": [],
     "scenarios": [],           

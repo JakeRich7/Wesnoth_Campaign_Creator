@@ -89,6 +89,7 @@ def handle_import():
     
     if selected_dir:
         app_state.state["imported_campaign_path"] = selected_dir
+        app_state.state["export_directory"] = str(Path(selected_dir).parent)
         app_state.state["discovered_units"] = []
         
         try:
@@ -100,17 +101,26 @@ def handle_import():
                 app_state.state["campaign_rank"] = "15"
                 app_state.state["campaign_icon"] = "units/elves-wood/lord.png"
                 app_state.state["campaign_image"] = "wesnoth-icon.png"
+                app_state.state["easy_img"] = "units/elves-wood/fighter.png"
+                app_state.state["normal_img"] = "units/elves-wood/lord.png"
+                app_state.state["hard_img"] = "units/elves-wood/high-lord.png"
+                app_state.state["easy_label"] = "Beginner"
+                app_state.state["normal_label"] = "Normal"
+                app_state.state["hard_label"] = "Challenging"
+                app_state.state["wesnoth_directory"] = "C:/Program Files/Battle for Wesnoth 1.18.3"
+                app_state.state["imported_campaign_path"] = ""
+                app_state.state["export_directory"] = str(Path.home() / "Desktop")
+                app_state.state["extra_addon_path"] = ""
+                app_state.state["discovered_units"] = []
+                app_state.state["scenarios"] = []
+                app_state.state["current_index"] = None
+                app_state.state["view_mode"] = "scenario"
                 app_state.state["generate_pbl"] = True
                 app_state.state["pbl_type"] = "campaign"
                 app_state.state["pbl_version"] = "1.0.0"
                 app_state.state["pbl_author"] = ""
                 app_state.state["pbl_email"] = ""
                 app_state.state["pbl_passphrase"] = ""
-                app_state.state["scenarios"] = []
-                app_state.state["current_index"] = None
-                app_state.state["imported_campaign_path"] = ""
-                app_state.state["extra_addon_path"] = ""
-                app_state.state["discovered_units"] = []
                 
                 refresh_sidebar()
                 render_workspace()
@@ -136,17 +146,26 @@ def handle_import():
             app_state.state["campaign_rank"] = "15"
             app_state.state["campaign_icon"] = "units/elves-wood/lord.png"
             app_state.state["campaign_image"] = "wesnoth-icon.png"
+            app_state.state["easy_img"] = "units/elves-wood/fighter.png"
+            app_state.state["normal_img"] = "units/elves-wood/lord.png"
+            app_state.state["hard_img"] = "units/elves-wood/high-lord.png"
+            app_state.state["easy_label"] = "Beginner"
+            app_state.state["normal_label"] = "Normal"
+            app_state.state["hard_label"] = "Challenging"
+            app_state.state["wesnoth_directory"] = "C:/Program Files/Battle for Wesnoth 1.18.3"
+            app_state.state["imported_campaign_path"] = ""
+            app_state.state["export_directory"] = str(Path.home() / "Desktop")
+            app_state.state["extra_addon_path"] = ""
+            app_state.state["discovered_units"] = []
+            app_state.state["scenarios"] = []
+            app_state.state["current_index"] = None
+            app_state.state["view_mode"] = "scenario"
             app_state.state["generate_pbl"] = True
             app_state.state["pbl_type"] = "campaign"
             app_state.state["pbl_version"] = "1.0.0"
             app_state.state["pbl_author"] = ""
             app_state.state["pbl_email"] = ""
             app_state.state["pbl_passphrase"] = ""
-            app_state.state["scenarios"] = []
-            app_state.state["current_index"] = None
-            app_state.state["imported_campaign_path"] = ""
-            app_state.state["extra_addon_path"] = ""
-            app_state.state["discovered_units"] = []
             
             refresh_sidebar()
             render_workspace()
@@ -159,19 +178,26 @@ def handle_reset():
         app_state.state["campaign_rank"] = "15"
         app_state.state["campaign_icon"] = "units/elves-wood/lord.png"
         app_state.state["campaign_image"] = "wesnoth-icon.png"
-        
+        app_state.state["easy_img"] = "units/elves-wood/fighter.png"
+        app_state.state["normal_img"] = "units/elves-wood/lord.png"
+        app_state.state["hard_img"] = "units/elves-wood/high-lord.png"
+        app_state.state["easy_label"] = "Beginner"
+        app_state.state["normal_label"] = "Normal"
+        app_state.state["hard_label"] = "Challenging"
+        app_state.state["wesnoth_directory"] = "C:/Program Files/Battle for Wesnoth 1.18.3"
+        app_state.state["imported_campaign_path"] = ""
+        app_state.state["export_directory"] = str(Path.home() / "Desktop")
+        app_state.state["extra_addon_path"] = ""
+        app_state.state["discovered_units"] = []
+        app_state.state["scenarios"] = []
+        app_state.state["current_index"] = None
+        app_state.state["view_mode"] = "scenario"
         app_state.state["generate_pbl"] = True
         app_state.state["pbl_type"] = "campaign"
         app_state.state["pbl_version"] = "1.0.0"
         app_state.state["pbl_author"] = ""
         app_state.state["pbl_email"] = ""
         app_state.state["pbl_passphrase"] = ""
-        
-        app_state.state["scenarios"] = []
-        app_state.state["current_index"] = None
-        app_state.state["imported_campaign_path"] = ""
-        app_state.state["extra_addon_path"] = ""
-        app_state.state["discovered_units"] = []
         
         refresh_sidebar()
         render_workspace()
@@ -332,6 +358,24 @@ def render_campaign_settings_panel():
             
     ctk.CTkButton(extra_row, text="📂 Browse", width=70, command=browse_extra).pack(side="left", padx=5)
         
+    exp_row = ctk.CTkFrame(canvas, fg_color="transparent")
+    exp_row.pack(fill="x", pady=4, anchor="w")
+    ctk.CTkLabel(exp_row, text="Campaign Export Path:", font=("Arial", 12, "bold"), width=100, anchor="w").pack(side="left")
+    
+    exp_ent = ctk.CTkEntry(exp_row, width=300)
+    exp_ent.insert(0, app_state.state.get("export_directory", ""))
+    exp_ent.pack(side="left", padx=5)
+    exp_ent.bind("<KeyRelease>", lambda e: app_state.state.update({"export_directory": exp_ent.get()}))
+    
+    def browse_export():
+        d = filedialog.askdirectory(title="Select Folder Where Campaign Directory Will Be Created")
+        if d:
+            app_state.state["export_directory"] = d
+            exp_ent.delete(0, "end")
+            exp_ent.insert(0, d)
+            
+    ctk.CTkButton(exp_row, text="📂 Browse", width=70, command=browse_export).pack(side="left", padx=5)
+
     ctk.CTkLabel(canvas, text="Campaign Description:", font=("Arial", 12, "bold")).pack(anchor="w", pady=(15, 2))
     desc_box = ctk.CTkTextbox(canvas, width=500, height=80)
     desc_box.insert("1.0", app_state.state["campaign_description"])
