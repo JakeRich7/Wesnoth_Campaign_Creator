@@ -81,11 +81,31 @@ def generate_campaign_files(campaign_name, scenarios_list):
     extra_unit_include = ""
     extra_path = app_state.state.get("extra_addon_path", "")
     if extra_path:
-        addon_id = Path(extra_path).name
+        addon_dir = Path(extra_path)
+        addon_id = addon_dir.name
         extra_binary = f"""[binary_path]
     path=data/add-ons/{addon_id}
 [/binary_path]"""
-        extra_unit_include = f"\n{{~add-ons/{addon_id}/units}}"
+        
+        inc_lines = []
+        for root_cfg in sorted(addon_dir.glob("*.cfg")):
+            if root_cfg.name not in ["_main.cfg", "_info.cfg"]:
+                inc_lines.append(f"{{~add-ons/{addon_id}/{root_cfg.name}}}")
+                
+        detected_folders = []
+        for item in addon_dir.iterdir():
+            if item.is_dir() and item.name.lower() != "scenarios":
+                detected_folders.append(item.name)
+        detected_folders.sort()
+        
+        if "units" in detected_folders:
+            detected_folders.remove("units")
+            detected_folders.append("units")
+            
+        for folder_name in detected_folders:
+            inc_lines.append(f"{{~add-ons/{addon_id}/{folder_name}}}")
+            
+        extra_unit_include = "\n" + "\n".join(inc_lines)
 
     main_cfg_raw = f"""
 [campaign]
