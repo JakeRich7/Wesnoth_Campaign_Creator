@@ -238,7 +238,7 @@ def import_campaign_folder(folder_path):
                 team_m = re.search(r'\bteam_name\s*=\s*(\w+)', s_block)
                 
                 type_m = re.search(r'type\s*=\s*"([^"]+)"', s_block)
-                if not type_m: type_m = re.search(r'type\s*=\s*([a-zA-Z0-9_\s]+)', s_block)
+                if not type_m: type_m = re.search(r'type\s*=\s*([a-zA-Z0-9_\s]+?)(?=\s*\n|\s*\r|$)', s_block)
                 
                 id_m = re.search(r'\bid\s*=\s*"([^"]+)"', s_block)
                 if not id_m: id_m = re.search(r'\bid\s*=\s*([a-zA-Z0-9_]+)', s_block)

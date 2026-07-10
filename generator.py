@@ -77,6 +77,16 @@ def generate_campaign_files(campaign_name, scenarios_list):
     first_clean = re.sub(r'[^a-zA-Z0-9\s_]', '', scenarios_list[0]["title"])
     first_scen_id = f"01_{first_clean.strip().replace(' ', '_')}"
 
+    extra_binary = ""
+    extra_unit_include = ""
+    extra_path = app_state.state.get("extra_addon_path", "")
+    if extra_path:
+        addon_id = Path(extra_path).name
+        extra_binary = f"""[binary_path]
+    path=data/add-ons/{addon_id}
+[/binary_path]"""
+        extra_unit_include = f"\n{{~add-ons/{addon_id}/units}}"
+
     main_cfg_raw = f"""
 [campaign]
     id={campaign_id}
@@ -98,9 +108,11 @@ def generate_campaign_files(campaign_name, scenarios_list):
 [binary_path]
     path=data/add-ons/{campaign_id}
 [/binary_path]
-{{~add-ons/{campaign_id}/scenarios}}
+{extra_binary}
+{{~add-ons/{campaign_id}/scenarios}}{extra_unit_include}
 #endif
 """
+
     with open(export_root / "_main.cfg", "w", encoding="utf-8") as f:
         f.write(format_wml(main_cfg_raw))
         

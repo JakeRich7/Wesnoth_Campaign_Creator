@@ -275,11 +275,18 @@ def handle_img_upload(key, entry_widget):
         filetypes=[("Image Files", "*.png;*.jpg;*.jpeg"), ("All Files", "*.*")]
     )
     if file_path:
-        filename = Path(file_path).name
+        normalized_path = file_path.replace("\\", "/")
+        filename = Path(normalized_path).name
         campaign_id = app_state.state["campaign_name"].strip().replace(" ", "_")
         
         if key == "campaign_image":
             formatted_path = f"data/add-ons/{campaign_id}/images/{filename}"
+        elif "data/add-ons/" in normalized_path:
+            parts = normalized_path.split("data/add-ons/")
+            formatted_path = f"data/add-ons/{parts[1]}"
+        elif "core/images/" in normalized_path:
+            parts = normalized_path.split("core/images/")
+            formatted_path = parts[1]
         elif key in ["campaign_icon", "easy_img", "normal_img", "hard_img"]:
             formatted_path = f"units/{filename}"
         else:
@@ -509,7 +516,8 @@ def render_workspace():
 
     event_sides = len([ev for ev in data.get("events", []) if ev.get("type") == "side"])
     side_count = event_sides if event_sides > 0 else data.get("captains_count", 2)
-    status_text = f"✅ Map Uploaded. {side_count} sides!" if data.get("map_data") else "❌ No Map Loaded."
+    m_name = data.get("map_name", "custom_map.map")
+    status_text = f"✅ {m_name} Uploaded. {side_count} sides!" if data.get("map_data") else "❌ No Map Loaded."
     map_status_lbl = ctk.CTkLabel(map_row, text=status_text, font=("Arial", 11, "italic"), text_color="#2ecc71" if data.get("map_data") else "#888888")
     map_status_lbl.pack(side="left", padx=10)
 

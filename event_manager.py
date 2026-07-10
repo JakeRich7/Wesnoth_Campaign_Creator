@@ -106,13 +106,27 @@ def render_metadata_panel(parent_frame, event_idx, event_data, container_frame):
         turn_entry.bind("<KeyRelease>", lambda e: save_event_inputs(event_idx, "turn_number", turn_entry.get()))
 
     if event_data["type"] in ["die", "last_breath"]:
-        row = ctk.CTkFrame(scroll_pane, fg_color="transparent")
-        row.pack(fill="x", pady=4, anchor="w")
-        ctk.CTkLabel(row, text="Filter Unit ID:", font=("Arial", 12, "bold"), width=100, anchor="w").pack(side="left")
-        filter_entry = ctk.CTkEntry(row, width=150)
-        filter_entry.insert(0, event_data.get("filter_id", ""))
-        filter_entry.pack(side="left")
-        filter_entry.bind("<KeyRelease>", lambda e: save_event_inputs(event_idx, "filter_id", filter_entry.get()))
+        filter_row = ctk.CTkFrame(scroll_pane, fg_color="transparent")
+        filter_row.pack(fill="x", pady=4, anchor="w")
+        ctk.CTkLabel(filter_row, text="Filter Unit ID:", font=("Arial", 12, "bold"), width=150, anchor="w").pack(side="left")
+        
+        filter_ent = ctk.CTkEntry(filter_row, width=150)
+        filter_ent.insert(0, event_data.get("filter_id", ""))
+        filter_ent.pack(side="left")
+        filter_ent.bind("<KeyRelease>", lambda e, fe=filter_ent: event_data.update({"filter_id": fe.get()}))
+        
+        available_targets = get_available_speakers()
+        
+        def apply_filter_select(val, target_entry=filter_ent):
+            target_entry.delete(0, "end")
+            target_entry.insert(0, val)
+            event_data["filter_id"] = val
+            
+        filter_menu = ctk.CTkOptionMenu(filter_row, values=available_targets, width=110, height=22, font=("Arial", 10))
+        filter_menu.set(event_data.get("filter_id", "") if event_data.get("filter_id", "") in available_targets else "")
+        filter_menu.pack(side="left", padx=5)
+        filter_menu.configure(command=lambda val, target=filter_ent: apply_filter_select(val, target))
+
 
     if event_data["type"] == "side":
         num_row = ctk.CTkFrame(scroll_pane, fg_color="transparent")
@@ -177,12 +191,12 @@ def render_metadata_panel(parent_frame, event_idx, event_data, container_frame):
             sub_scroll.pack(fill="both", expand=True, padx=10, pady=10)
             
             def pick_unit(unit_name):
-                save_event_inputs(event_idx, "captain_type", unit_name)
-                type_display.configure(text=unit_name)
+                clean_unit_id = unit_name.split("[")[0].strip().replace(" id", "")
+                save_event_inputs(event_idx, "captain_type", clean_unit_id)
+                type_display.configure(text=clean_unit_id)
                 sel_win.destroy()
                 
             for folder_name, units_list in unit_roster.items():
-                # Shared container frame ensures the items stay locked to this row
                 row_wrapper = ctk.CTkFrame(sub_scroll, fg_color="transparent")
                 row_wrapper.pack(fill="x", pady=2)
                 
