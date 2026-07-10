@@ -446,12 +446,13 @@ def render_campaign_settings_panel():
         icon_ent.bind("<KeyRelease>", lambda e: app_state.state.update({"campaign_icon": icon_ent.get()}))
         
         def browse_pbl_icon():
-            canvas.master.master.attributes("-topmost", False)
+            root_win = canvas.winfo_toplevel()
+            root_win.attributes("-topmost", False)
             file_path = filedialog.askopenfilename(
                 title="Select Server Publication Icon Image",
                 filetypes=[("Image Files", "*.png;*.jpg;*.jpeg"), ("All Files", "*.*")]
             )
-            canvas.master.master.attributes("-topmost", True)
+            root_win.attributes("-topmost", True)
             if file_path:
                 filename = Path(file_path).name
                 formatted_path = f"units/{filename}"
@@ -474,54 +475,6 @@ def render_campaign_settings_panel():
     pbl_chk.pack(side="left", padx=5)
     
     toggle_pbl_view()
-
-    def render_pbl_fields():
-        for widget in pbl_panel_frame.winfo_children():
-            widget.destroy()
-            
-        ctk.CTkLabel(pbl_panel_frame, text="Server Upload Parameters:", font=("Arial", 12, "bold")).pack(anchor="w", padx=10, pady=(8, 4))
-        
-        pbl_fields = [
-            ("Version:", "pbl_version"),
-            ("Author Name:", "pbl_author"),
-            ("Public Email:", "pbl_email"),
-            ("Server Passphrase:", "pbl_passphrase")
-        ]
-        
-        for label_text, state_key in pbl_fields:
-            row = ctk.CTkFrame(pbl_panel_frame, fg_color="transparent")
-            row.pack(fill="x", pady=3, anchor="w")
-            ctk.CTkLabel(row, text=label_text, font=("Arial", 11, "bold"), width=140, anchor="w").pack(side="left", padx=10)
-            
-            ent = ctk.CTkEntry(row, width=220, height=22, font=("Arial", 11))
-            ent.insert(0, app_state.state.get(state_key, ""))
-            ent.pack(side="left")
-            ent.bind("<KeyRelease>", lambda e, k=state_key, w=ent: app_state.state.update({k: w.get()}))
-            
-        icon_row = ctk.CTkFrame(pbl_panel_frame, fg_color="transparent")
-        icon_row.pack(fill="x", pady=3, anchor="w")
-        ctk.CTkLabel(icon_row, text="PBL Upload Icon:", font=("Arial", 11, "bold"), width=140, anchor="w").pack(side="left", padx=10)
-        
-        icon_ent = ctk.CTkEntry(icon_row, width=220, height=22, font=("Arial", 11))
-        icon_ent.insert(0, app_state.state.get("campaign_icon", "units/elves-wood/lord.png"))
-        icon_ent.pack(side="left")
-        icon_ent.bind("<KeyRelease>", lambda e: app_state.state.update({"campaign_icon": icon_ent.get()}))
-        
-        def browse_pbl_icon():
-            canvas.master.master.attributes("-topmost", False)
-            file_path = filedialog.askopenfilename(
-                title="Select Server Publication Icon Image",
-                filetypes=[("Image Files", "*.png;*.jpg;*.jpeg"), ("All Files", "*.*")]
-            )
-            canvas.master.master.attributes("-topmost", True)
-            if file_path:
-                filename = Path(file_path).name
-                formatted_path = f"units/{filename}"
-                app_state.state["campaign_icon"] = formatted_path
-                icon_ent.delete(0, "end")
-                icon_ent.insert(0, formatted_path)
-                
-        ctk.CTkButton(icon_row, text="📂 Browse", width=70, height=20, font=("Arial", 11), command=browse_pbl_icon).pack(side="left", padx=5)
 
 def render_workspace():
     for widget in app_state.state["center_content_frame"].winfo_children():
@@ -553,8 +506,14 @@ def render_workspace():
     
     upload_btn = ctk.CTkButton(map_row, text="📂 Upload Map File", command=handle_upload, width=150)
     upload_btn.pack(side="left", padx=(10, 0))
-    
-    if data["map_name"]:
+
+    event_sides = len([ev for ev in data.get("events", []) if ev.get("type") == "side"])
+    side_count = event_sides if event_sides > 0 else data.get("captains_count", 2)
+    status_text = f"✅ Map Uploaded. {side_count} sides!" if data.get("map_data") else "❌ No Map Loaded."
+    map_status_lbl = ctk.CTkLabel(map_row, text=status_text, font=("Arial", 11, "italic"), text_color="#2ecc71" if data.get("map_data") else "#888888")
+    map_status_lbl.pack(side="left", padx=10)
+
+    if data.get("map_data"):
         turns_row = ctk.CTkFrame(app_state.state["center_content_frame"], fg_color="transparent")
         turns_row.pack(fill="x", pady=10, anchor="w")
         ctk.CTkLabel(turns_row, text="Turn Limits (E/N/H):", font=("Arial", 13, "bold"), width=130, anchor="w").pack(side="left")

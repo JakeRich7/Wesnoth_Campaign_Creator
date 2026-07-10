@@ -1,4 +1,5 @@
 import re
+import platform
 from pathlib import Path
 import app_state
 
@@ -162,12 +163,22 @@ def import_campaign_folder(folder_path):
             auth_match = re.search(r'author\s*=\s*"([^"]+)"', pbl_content)
             email_match = re.search(r'email\s*=\s*"([^"]+)"', pbl_content)
             pass_match = re.search(r'passphrase\s*=\s*"([^"]+)"', pbl_content)
+            dep_match = re.search(r'dependencies\s*=\s*"([^"]+)"', pbl_content)
             
             if type_match: app_state.state["pbl_type"] = type_match.group(1)
             if ver_match: app_state.state["pbl_version"] = ver_match.group(1)
             if auth_match: app_state.state["pbl_author"] = auth_match.group(1)
             if email_match: app_state.state["pbl_email"] = email_match.group(1)
             if pass_match: app_state.state["pbl_passphrase"] = pass_match.group(1)
+            
+            if dep_match:
+                dep_id = dep_match.group(1).strip()
+                user_home = Path.home()
+                if platform.system() == "Darwin":
+                    inferred_path = user_home / "Library" / "Application Support" / "Wesnoth1.18" / "data" / "add-ons" / dep_id
+                else:
+                    inferred_path = user_home / "Documents" / "My Games" / "Wesnoth1.18" / "data" / "add-ons" / dep_id
+                app_state.state["extra_addon_path"] = inferred_path.as_posix()
         except Exception:
             pass
     else:

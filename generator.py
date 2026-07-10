@@ -193,6 +193,12 @@ def generate_campaign_files(campaign_name, scenarios_list):
             f.write(format_wml(scenario_cfg_raw))
             
     if app_state.state.get("generate_pbl", True):
+        dep_line = ""
+        extra_path = app_state.state.get("extra_addon_path", "")
+        if extra_path:
+            addon_id = Path(extra_path).name
+            dep_line = f'\ndependencies="{addon_id}"'
+            
         pbl_raw = f"""title="{campaign_name}"
 type="campaign"
 icon="{app_state.state.get('campaign_icon', '')}"
@@ -200,7 +206,7 @@ version="{app_state.state.get('pbl_version', '1.0.0')}"
 author="{app_state.state.get('pbl_author', '')}"
 email="{app_state.state.get('pbl_email', '')}"
 description="{app_state.state.get('campaign_description', '')}"
-passphrase="{app_state.state.get('pbl_passphrase', '')}"
+passphrase="{app_state.state.get('pbl_passphrase', '')}"{dep_line}
 """
         with open(export_root / "_server.pbl", "w", encoding="utf-8") as f:
             f.write(pbl_raw)
