@@ -1,4 +1,12 @@
+import platform
 from pathlib import Path
+
+current_os = platform.system()
+
+if current_os == "Darwin":
+    default_wesnoth = "/Applications/Battle for Wesnoth.app/Contents/Resources"
+else:
+    default_wesnoth = "C:/Program Files/Battle for Wesnoth 1.18.3"
 
 state = {
     "campaign_name": "My Epic Campaign",
@@ -6,15 +14,15 @@ state = {
     "campaign_rank": "15",
     "campaign_icon": "units/elves-wood/lord.png",
     "campaign_image": "wesnoth-icon.png",
-    "easy_img": "units/elves-wood/fighter.png",
+    "easy_img": "units/elves-wood/fighter/fighter.png",
     "normal_img": "units/elves-wood/lord.png",
     "hard_img": "units/elves-wood/high-lord.png",
     "easy_label": "Beginner",
     "normal_label": "Normal",
     "hard_label": "Challenging",
-    "wesnoth_directory": "C:/Program Files/Battle for Wesnoth 1.18.3",
+    "wesnoth_directory": default_wesnoth,
     "imported_campaign_path": "",
-    "export_directory": str(Path.home() / "Desktop"),
+    "export_directory": (Path.home() / "Desktop").as_posix(),
     "extra_addon_path": "",
     "discovered_units": [],
     "scenarios": [],           

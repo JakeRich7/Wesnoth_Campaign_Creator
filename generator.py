@@ -54,7 +54,7 @@ def compile_event_to_wml(ev, is_last_scenario=False):
         if msg.get("speaker") or msg.get("message"):
             wml += f"[message]\nspeaker={msg.get('speaker', 'narrator')}\nmessage= _ \"{msg.get('message', '')}\"\n[/message]\n"
             
-    if ev_type in ["die", "victory"]:
+    if ev_type == "die":
         wml += "[endlevel]\nresult=victory\nbonus=yes\n{NEW_GOLD_CARRYOVER 40}\n[/endlevel]\n"
         
     wml += "[/event]\n"

@@ -89,7 +89,7 @@ def handle_import():
     
     if selected_dir:
         app_state.state["imported_campaign_path"] = selected_dir
-        app_state.state["export_directory"] = str(Path(selected_dir).parent)
+        app_state.state["export_directory"] = str(Path(selected_dir).parent).replace("\\", "/")
         app_state.state["discovered_units"] = []
         
         try:
@@ -101,15 +101,15 @@ def handle_import():
                 app_state.state["campaign_rank"] = "15"
                 app_state.state["campaign_icon"] = "units/elves-wood/lord.png"
                 app_state.state["campaign_image"] = "wesnoth-icon.png"
-                app_state.state["easy_img"] = "units/elves-wood/fighter.png"
+                app_state.state["easy_img"] = "units/elves-wood/fighter/fighter.png"
                 app_state.state["normal_img"] = "units/elves-wood/lord.png"
                 app_state.state["hard_img"] = "units/elves-wood/high-lord.png"
                 app_state.state["easy_label"] = "Beginner"
                 app_state.state["normal_label"] = "Normal"
                 app_state.state["hard_label"] = "Challenging"
-                app_state.state["wesnoth_directory"] = "C:/Program Files/Battle for Wesnoth 1.18.3"
+                app_state.state["wesnoth_directory"] = app_state.default_wesnoth
                 app_state.state["imported_campaign_path"] = ""
-                app_state.state["export_directory"] = str(Path.home() / "Desktop")
+                app_state.state["export_directory"] = str(Path.home() / "Desktop").replace("\\", "/")
                 app_state.state["extra_addon_path"] = ""
                 app_state.state["discovered_units"] = []
                 app_state.state["scenarios"] = []
@@ -146,15 +146,15 @@ def handle_import():
             app_state.state["campaign_rank"] = "15"
             app_state.state["campaign_icon"] = "units/elves-wood/lord.png"
             app_state.state["campaign_image"] = "wesnoth-icon.png"
-            app_state.state["easy_img"] = "units/elves-wood/fighter.png"
+            app_state.state["easy_img"] = "units/elves-wood/fighter/fighter.png"
             app_state.state["normal_img"] = "units/elves-wood/lord.png"
             app_state.state["hard_img"] = "units/elves-wood/high-lord.png"
             app_state.state["easy_label"] = "Beginner"
             app_state.state["normal_label"] = "Normal"
             app_state.state["hard_label"] = "Challenging"
-            app_state.state["wesnoth_directory"] = "C:/Program Files/Battle for Wesnoth 1.18.3"
+            app_state.state["wesnoth_directory"] = app_state.default_wesnoth
             app_state.state["imported_campaign_path"] = ""
-            app_state.state["export_directory"] = str(Path.home() / "Desktop")
+            app_state.state["export_directory"] = str(Path.home() / "Desktop").replace("\\", "/")
             app_state.state["extra_addon_path"] = ""
             app_state.state["discovered_units"] = []
             app_state.state["scenarios"] = []
@@ -178,15 +178,15 @@ def handle_reset():
         app_state.state["campaign_rank"] = "15"
         app_state.state["campaign_icon"] = "units/elves-wood/lord.png"
         app_state.state["campaign_image"] = "wesnoth-icon.png"
-        app_state.state["easy_img"] = "units/elves-wood/fighter.png"
+        app_state.state["easy_img"] = "units/elves-wood/fighter/fighter.png"
         app_state.state["normal_img"] = "units/elves-wood/lord.png"
         app_state.state["hard_img"] = "units/elves-wood/high-lord.png"
         app_state.state["easy_label"] = "Beginner"
         app_state.state["normal_label"] = "Normal"
         app_state.state["hard_label"] = "Challenging"
-        app_state.state["wesnoth_directory"] = "C:/Program Files/Battle for Wesnoth 1.18.3"
+        app_state.state["wesnoth_directory"] = app_state.default_wesnoth
         app_state.state["imported_campaign_path"] = ""
-        app_state.state["export_directory"] = str(Path.home() / "Desktop")
+        app_state.state["export_directory"] = str(Path.home() / "Desktop").replace("\\", "/")
         app_state.state["extra_addon_path"] = ""
         app_state.state["discovered_units"] = []
         app_state.state["scenarios"] = []
@@ -334,7 +334,8 @@ def render_campaign_settings_panel():
     def browse_dir():
         d = filedialog.askdirectory(title="Select Wesnoth Installation Folder")
         if d:
-            app_state.state["wesnoth_directory"] = d
+            clean_path = d.replace("\\", "/")
+            app_state.state["wesnoth_directory"] = clean_path
             app_state.state["discovered_units"] = []
             dir_ent.delete(0, "end")
             dir_ent.insert(0, d)
@@ -351,7 +352,8 @@ def render_campaign_settings_panel():
     def browse_extra():
         d = filedialog.askdirectory(title="Select Optional Extra Unit Add-on Folder")
         if d:
-            app_state.state["extra_addon_path"] = d
+            clean_path = d.replace("\\", "/")
+            app_state.state["extra_addon_path"] = clean_path
             app_state.state["discovered_units"] = []
             extra_ent.delete(0, "end")
             extra_ent.insert(0, d)
@@ -370,7 +372,8 @@ def render_campaign_settings_panel():
     def browse_export():
         d = filedialog.askdirectory(title="Select Folder Where Campaign Directory Will Be Created")
         if d:
-            app_state.state["export_directory"] = d
+            clean_path = d.replace("\\", "/")
+            app_state.state["export_directory"] = clean_path
             exp_ent.delete(0, "end")
             exp_ent.insert(0, d)
             
