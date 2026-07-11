@@ -304,6 +304,15 @@ def render_metadata_panel(parent_frame, event_idx, event_data, container_frame):
         refresh_recruit_labels()
 
     if event_data["type"] == "prestart":
+        side_row = ctk.CTkFrame(scroll_pane, fg_color="transparent")
+        side_row.pack(fill="x", pady=(5, 10), anchor="w")
+        ctk.CTkLabel(side_row, text="Objective Target Side:", font=("Arial", 12, "bold"), width=150, anchor="w").pack(side="left")
+        
+        obj_side_ent = ctk.CTkEntry(side_row, width=70)
+        obj_side_ent.insert(0, str(event_data.get("objective_side", "1")))
+        obj_side_ent.pack(side="left", padx=5)
+        obj_side_ent.bind("<KeyRelease>", lambda e, ose=obj_side_ent: event_data.update({"objective_side": ose.get()}))
+
         ctk.CTkLabel(scroll_pane, text="Scenario Objectives:", font=("Arial", 12, "bold")).pack(anchor="w", pady=(10, 5))
         for o_idx, obj in enumerate(event_data.get("objectives", [])):
             o_row = ctk.CTkFrame(scroll_pane, fg_color="transparent")

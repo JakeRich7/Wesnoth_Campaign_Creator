@@ -42,7 +42,8 @@ def compile_event_to_wml(ev, is_last_scenario=False):
         wml += f"[filter]\nid={ev['filter_id']}\n[/filter]\n"
         
     if ev_type == "prestart":
-        wml += "[objectives]\nside=1\n"
+        obj_side = ev.get("objective_side", "1")
+        wml += f"    [objectives]\n        side={obj_side}\n"
         for obj in ev.get("objectives", []):
             wml += f"[objective]\ndescription= _ \"{obj['description']}\"\ncondition={obj['condition']}\n[/objective]\n"
         wml += "{TURNS_RUN_OUT}\n"
@@ -153,12 +154,14 @@ def generate_campaign_files(campaign_name, scenarios_list):
         side_blocks = ""
         events_wml = ""
         
-        for ev in s.get("events", []):
-            if ev["type"] == "side":
-                recruits_string = ",".join(ev.get("recruit_list", []))
-                recruit_line = f'recruit="{recruits_string}"' if recruits_string else ""
-                
-                side_blocks += f"""
+        side_events = [ev for ev in s.get("events", []) if ev["type"] == "side"]
+        side_events.sort(key=lambda x: int(x.get("side_number", "1")))
+        
+        for ev in side_events:
+            recruits_string = ",".join(ev.get("recruit_list", []))
+            recruit_line = f'recruit="{recruits_string}"' if recruits_string else ""
+            
+            side_blocks += f"""
 [side]
     side={ev.get('side_number', '1')}
     controller={ev.get('controller', 'human')}
@@ -172,7 +175,9 @@ def generate_campaign_files(campaign_name, scenarios_list):
     {{GOLD {ev.get('gold_easy', '200')} {ev.get('gold_normal', '150')} {ev.get('gold_hard', '100')}}}
     {{INCOME {ev.get('income_easy', '2')} {ev.get('income_normal', '1')} {ev.get('income_hard', '0')}}}
 [/side]"""
-            else:
+
+        for ev in s.get("events", []):
+            if ev["type"] != "side":
                 events_wml += compile_event_to_wml(ev, is_last_scenario=is_last) + "\n"
 
         if not side_blocks:

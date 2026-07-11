@@ -35,6 +35,13 @@ def parse_events_from_wml(content):
         filter_match = re.search(r'\[filter\]\s*id\s*=\s*(\w+)\s*\[/filter\]', block)
         filter_id = filter_match.group(1) if filter_match else ""
         
+        obj_side = "1"
+        obj_match = re.search(r'\[objectives\](.*?)(?=\[/objectives\])', block, re.DOTALL)
+        if obj_match:
+            side_num_match = re.search(r'side\s*=\s*(\d+)', obj_match.group(1))
+            if side_num_match:
+                obj_side = side_num_match.group(1)
+
         objectives = []
         obj_blocks = re.findall(r'\[objective\](.*?)\[/objective\]', block, re.DOTALL)
         for obj_b in obj_blocks:
@@ -59,6 +66,7 @@ def parse_events_from_wml(content):
             "type": ev_type,
             "turn_number": turn_num,
             "filter_id": filter_id,
+            "objective_side": obj_side,
             "objectives": objectives,
             "messages": messages
         })
