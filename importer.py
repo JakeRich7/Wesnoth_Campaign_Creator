@@ -192,6 +192,36 @@ def import_campaign_folder(folder_path):
             img_match = re.search(r'\bimage\s*=\s*"([^"]+)"', main_content)
             if img_match:
                 app_state.state["campaign_image"] = img_match.group(1)
+
+            icon_match = re.search(r'\bicon\s*=\s*"([^"]+)"', main_content)
+            desc_match = re.search(r'\bdescription\s*=\s*(?:_\s*)?"([^"]*)"', main_content, re.DOTALL)
+            rank_match = re.search(r'\brank\s*=\s*"([^"]+)"', main_content)
+            
+            if icon_match: app_state.state["campaign_icon"] = icon_match.group(1)
+            if desc_match: app_state.state["campaign_description"] = desc_match.group(1)
+            if rank_match: app_state.state["campaign_rank"] = rank_match.group(1)
+
+            diff_matches = re.findall(r'\{CAMPAIGN_DIFFICULTY\s+[A-Z]+\s+"([^"]+)"\s+\(\s*_\s*"([^"]+)"', main_content)
+            if len(diff_matches) >= 3:
+                app_state.state["easy_img"] = diff_matches[0][0]
+                app_state.state["easy_label"] = diff_matches[0][1]
+                app_state.state["normal_img"] = diff_matches[1][0]
+                app_state.state["normal_label"] = diff_matches[1][1]
+                app_state.state["hard_img"] = diff_matches[2][0]
+                app_state.state["hard_label"] = diff_matches[2][1]
+
+            dep_matches = re.findall(r'\[binary_path\]\s+path=data/add-ons/([^\n\s\]]+)', main_content)
+            campaign_id = root_path.name
+            
+            for d_id in dep_matches:
+                if d_id != campaign_id:
+                    user_home = Path.home()
+                    if platform.system() == "Darwin":
+                        inferred_path = user_home / "Library" / "Application Support" / "Wesnoth1.18" / "data" / "add-ons" / d_id
+                    else:
+                        inferred_path = user_home / "Documents" / "My Games" / "Wesnoth1.18" / "data" / "add-ons" / d_id
+                    app_state.state["extra_addon_path"] = inferred_path.as_posix()
+                    break
         except Exception:
             pass
     
@@ -215,6 +245,11 @@ def import_campaign_folder(folder_path):
             else:
                 title = re.sub(r'^\d+_+', '', cfg_path.stem).replace("_", " ").title()
             
+            t_easy, t_norm, t_hard = "24", "22", "20"
+            turns_m = re.search(r'\{TURNS\s+([^\s}]+)\s+([^\s}]+)\s+([^\s}]+)\}', content)
+            if turns_m:
+                t_easy, t_norm, t_hard = turns_m.group(1), turns_m.group(2), turns_m.group(3)
+
             map_name_match = re.search(r'map_data\s*=\s*"[^"]*/([^"/]+\.map)["}]', content)
             map_name = map_name_match.group(1) if map_name_match else f"{idx+1:02d}_map.map"
             
@@ -294,11 +329,13 @@ def import_campaign_folder(folder_path):
                 "title": title,
                 "map_name": map_name,
                 "map_data": map_data,
+                "turns_easy": t_easy,
+                "turns_normal": t_norm,
+                "turns_hard": t_hard,
                 "captains_count": captains_count,
                 "events": scen_events,
                 "story_parts": story_parts,
                 "active_event_index": None
-
             })
         except Exception:
             continue

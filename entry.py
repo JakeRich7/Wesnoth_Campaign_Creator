@@ -127,7 +127,7 @@ def handle_import():
                 messagebox.showwarning("Import Failed", "No valid .cfg scenario files were found inside this folder. Workspace reset to default.")
                 return
                 
-            clean_name = Path(selected_dir).name.replace("wesnoth_addon_", "").replace("_", " ").title()
+            clean_name = Path(selected_dir).name
             app_state.state["campaign_name"] = clean_name
             app_state.state["scenarios"] = scenarios
             app_state.state["current_index"] = 0
