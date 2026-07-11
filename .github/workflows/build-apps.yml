@@ -31,7 +31,7 @@ jobs:
         name: Wesnoth_Campaign_Creator_Windows
         path: dist/Wesnoth_Campaign_Creator.exe
 
-  build-macos:
+  build-macos-silicon:
     runs-on: macos-latest
 
     steps:
@@ -57,7 +57,7 @@ jobs:
       with:
         name: Wesnoth_Campaign_Creator_Mac_Silicon
         path: dist/Wesnoth_Campaign_Creator.app/
-        
+
   build-macos-intel:
     runs-on: macos-11
 
