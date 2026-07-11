@@ -55,5 +55,36 @@ jobs:
     - name: Upload Mac App Bundle
       uses: actions/upload-artifact@v4
       with:
-        name: Wesnoth_Campaign_Creator_Mac
+        name: Wesnoth_Campaign_Creator_Mac_Silicon
+        path: dist/Wesnoth_Campaign_Creator.app/
+        
+  build-macos-intel:
+    runs-on: macos-11
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+
+    - name: Install Dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install pyinstaller customtkinter
+
+    - name: Verify Architecture
+      run: |
+        uname -m
+
+    - name: Build macOS Intel App
+      run: |
+        pyinstaller --windowed --noconsole --name="Wesnoth_Campaign_Creator" entry.py
+
+    - name: Upload Mac Intel App Bundle
+      uses: actions/upload-artifact@v4
+      with:
+        name: Wesnoth_Campaign_Creator_Mac_Intel
         path: dist/Wesnoth_Campaign_Creator.app/
